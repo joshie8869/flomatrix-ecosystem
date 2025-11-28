@@ -1,950 +1,891 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>FloMatrix Terminal v3.4 — Price Rail + Last Price Bubble</title>
+  <meta charset="UTF-8" />
+  <title>FloMatrix – Neon AnyChart Lab</title>
+
+  <!-- AnyChart Core + Stock Modules -->
+  <script src="../anychart-installation-package/js/anychart-core.min.js"></script>
+  <script src="../anychart-installation-package/js/anychart-stock.min.js"></script>
 
   <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body {
-      background:#000;
-      color:#ccc;
-      font-family:Segoe UI,Roboto,Arial,sans-serif;
-      overflow:hidden;
-    }
-
     :root {
-      --fm-neon:#2ef27e;
-      --fm-neon-soft:rgba(46,242,126,0.35);
-      --fm-neon-glow:rgba(46,242,126,0.18);
-      --fm-border:#181818;
-      --fm-panel:#0d0d0d;
-      --fm-muted:#999;
-      --fm-panel-dark:#050505;
-      --fm-bear:#ff4d6b;
-      --fm-bid:#00c16a;
-      --fm-ask:#f97373;
+      --fm-bg: #000000;
+      --fm-bg-panel: #05070d;
+      --fm-bg-panel-soft: #0b1018;
+      --fm-neon: #2ef27e;
+      --fm-neon-soft: #21c963;
+      --fm-neon-accent: #00ffaa;
+      --fm-accent-red: #ff4d6b;
+      --fm-text-main: #e7f2ff;
+      --fm-text-muted: #9fb4cc;
+      --fm-border-soft: #161c26;
     }
 
-    /************************************************************
-       SHELL + NEON BORDER
-    ************************************************************/
-    #fm-shell {
-      width:100vw;
-      height:100vh;
-      background:#000;
-      position:relative;
-    }
-    #fm-shell::before {
-      content:"";
-      position:absolute;
-      inset:0;
-      border:3px solid var(--fm-neon);
-      box-shadow:
-        0 0 18px var(--fm-neon-soft),
-        0 0 28px var(--fm-neon-glow);
-      pointer-events:none;
-    }
-    .fm-blade {
-      position:absolute;
-      width:26px;
-      height:26px;
-      border:3px solid var(--fm-neon);
-      box-shadow:0 0 8px var(--fm-neon-soft);
-    }
-    #blade-tl { top:-3px; left:-3px; border-right:none; border-bottom:none; }
-    #blade-tr { top:-3px; right:-3px; border-left:none; border-bottom:none; }
-    #blade-bl { bottom:-3px; left:-3px; border-right:none; border-top:none; }
-    #blade-br { bottom:-3px; right:-3px; border-left:none; border-top:none; }
-
-    /************************************************************
-       MENU BAR
-    ************************************************************/
-    #fm-menubar {
-      height:42px;
-      background:linear-gradient(to bottom,#050505,#0d0d0d);
-      border-bottom:1px solid var(--fm-border);
-      display:flex;
-      align-items:center;
-      padding:0 16px;
-      gap:20px;
-      position:relative;
-      z-index:20;
+    * {
+      box-sizing: border-box;
     }
 
-    #fm-logo-dot {
-      width:10px;height:10px;border-radius:50%;
-      background:var(--fm-neon);
-      box-shadow:0 0 8px var(--fm-neon-soft);
-    }
-    #fm-title { color:#eee; letter-spacing:0.08em; font-size:13px; }
-    #fm-symbol { padding:3px 8px; border:1px solid #222;
-      color:var(--fm-neon); border-radius:4px; }
-
-    .fm-menu-bar { display:flex; gap:12px; }
-
-    .fm-menu { position:relative; }
-    .fm-menu-title {
-      padding:4px 10px;
-      font-size:12px;
-      color:var(--fm-muted);
-      cursor:pointer;
-      border-radius:4px;
-      transition:0.15s;
-    }
-    .fm-menu-title:hover {
-      color:var(--fm-neon);
-      border:1px solid var(--fm-neon-soft);
-      background:#0a0a0a;
-      box-shadow:0 0 8px var(--fm-neon-soft);
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: var(--fm-bg);
+      color: var(--fm-text-main);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      overflow: hidden;
     }
 
-    .fm-menu-panel {
-      position:absolute;
-      top:110%;
-      left:0;
-      min-width:220px;
-      background:#050505;
-      border-radius:6px;
-      border:1px solid var(--fm-border);
-      box-shadow:0 10px 20px rgba(0,0,0,0.75),
-                 0 0 12px var(--fm-neon-soft);
-      padding:6px 0;
-      display:none;
-      z-index:50;
+    body {
+      display: flex;
+      flex-direction: column;
     }
-    .fm-menu:hover>.fm-menu-panel { display:block; }
 
-    .fm-menu-header {
-      padding:4px 12px;
-      font-size:11px;
-      color:#666;
-      letter-spacing:0.05em;
+    .fm-shell {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at top, #050814 0, #000000 55%, #000000 100%);
+    }
+
+    /* ---------- TOP BAR ---------- */
+
+    .fm-topbar {
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      background: linear-gradient(to right, #050810 0, #050910 40%, #050810 100%);
+      border-bottom: 1px solid #10151f;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.9),
+                  0 8px 24px rgba(0,0,0,0.8);
+    }
+
+    .fm-topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .fm-logo-block {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .fm-logo-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      background: radial-gradient(circle at 30% 0%, #36ff8c 0, #2ef27e 40%, #001b10 80%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 16px rgba(46, 242, 126, 0.35);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .fm-logo-icon::before {
+      content: "F";
+      font-weight: 800;
+      font-size: 14px;
+      color: #021408;
+      text-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+
+    .fm-logo-text-block {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
+    }
+
+    .fm-logo-title {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .fm-logo-subtitle {
+      font-size: 10px;
+      color: var(--fm-text-muted);
+      opacity: 0.9;
+    }
+
+    .fm-symbol-pill {
+      padding: 4px 14px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 0 50%, #1eff89 0, #00b04f 45%, #00351c 100%);
+      color: #00130a;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      box-shadow: 0 0 18px rgba(46, 242, 126, 0.45);
+      border: 1px solid rgba(0,0,0,0.7);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .fm-symbol-pill span.fm-symbol-tf {
+      font-size: 10px;
+      text-transform: uppercase;
+      opacity: 0.9;
+    }
+
+    .fm-symbol-pill:hover {
+      box-shadow: 0 0 24px rgba(46, 242, 126, 0.7);
+      transform: translateY(-0.5px);
+    }
+
+    .fm-menu-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-left: 12px;
+      font-size: 11px;
     }
 
     .fm-menu-item {
-      padding:6px 12px;
-      font-size:12px;
-      color:#ccc;
-      cursor:pointer;
-      white-space:nowrap;
-      position:relative;
+      position: relative;
+      padding: 4px 6px;
+      color: var(--fm-text-muted);
+      cursor: default;
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
+
+    .fm-menu-item span.fm-kbd {
+      opacity: 0.6;
+      font-size: 9px;
+      padding: 1px 4px;
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(5, 8, 16, 0.9);
+    }
+
+    .fm-menu-item::after {
+      content: "▾";
+      font-size: 8px;
+      opacity: 0.8;
+      margin-left: 2px;
+    }
+
     .fm-menu-item:hover {
-      background:rgba(46,242,126,0.12);
-      color:var(--fm-neon);
+      color: var(--fm-text-main);
     }
+
+    .fm-menu-item:hover .fm-menu-dropdown {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    .fm-menu-dropdown {
+      position: absolute;
+      top: 130%;
+      left: 0;
+      min-width: 200px;
+      background: radial-gradient(circle at top, #111727 0, #060811 55%, #010208 100%);
+      border-radius: 8px;
+      border: 1px solid rgba(46, 242, 126, 0.12);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+      padding: 8px 0;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-4px);
+      transition: opacity 120ms ease-out, transform 120ms ease-out;
+      z-index: 40;
+      backdrop-filter: blur(12px);
+    }
+
+    .fm-menu-section-title {
+      padding: 4px 12px 2px;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: rgba(159, 180, 204, 0.9);
+      opacity: 0.9;
+    }
+
+    .fm-menu-option {
+      padding: 5px 12px;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--fm-text-main);
+      cursor: pointer;
+    }
+
+    .fm-menu-option span.fm-option-muted {
+      font-size: 10px;
+      color: var(--fm-text-muted);
+      opacity: 0.8;
+      margin-left: 8px;
+    }
+
+    .fm-menu-option:hover {
+      background: rgba(46, 242, 126, 0.09);
+    }
+
     .fm-menu-separator {
-      height:1px;
-      background:#181818;
-      margin:6px 8px;
+      height: 1px;
+      margin: 4px 8px;
+      background: radial-gradient(circle at left, rgba(46,242,126,0.4), rgba(255,255,255,0.02));
+      opacity: 0.5;
     }
 
-    .fm-menu-item.has-sub {
-      padding-right:28px;
-    }
-    .fm-menu-item.has-sub::after {
-      content:"▶";
-      position:absolute;
-      top:50%; right:8px;
-      transform:translateY(-50%);
-      font-size:10px;color:#666;
+    .fm-topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 11px;
     }
 
-    .fm-submenu {
-      position:absolute;
-      top:0; left:100%;
-      min-width:200px;
-      background:#050505;
-      border-radius:6px;
-      border:1px solid var(--fm-border);
-      display:none;
-      box-shadow:0 10px 20px rgba(0,0,0,0.75),
-                 0 0 12px var(--fm-neon-soft);
-      padding:6px 0;
-      z-index:60;
-    }
-    .fm-menu-item.has-sub:hover > .fm-submenu {
-      display:block;
+    .fm-pill-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(4, 12, 4, 0.95);
+      border: 1px solid rgba(46, 242, 126, 0.45);
+      color: var(--fm-text-main);
+      font-size: 10px;
     }
 
-    #fm-menubar-right {
-      margin-left:auto;
-      display:flex;
-      gap:12px;
-      font-size:11px;
-      color:#777;
-    }
-    #fm-latency-dot {
-      width:7px;height:7px;border-radius:50%;
-      background:#13c06b;
-      box-shadow:0 0 6px #13c06b;
+    .fm-pill-status span.fm-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #2ef27e 0, #01a44b 55%, #003a20 100%);
+      box-shadow: 0 0 12px rgba(46, 242, 126, 0.8);
     }
 
-    /************************************************************
-       LEFT TOOLBAR
-    ************************************************************/
-    #fm-left-tools {
-      position:absolute;
-      top:42px;            /* under menubar */
-      bottom:26px;         /* above time rail */
-      left:0;
-      width:46px;
-      background:var(--fm-panel-dark);
-      border-right:1px solid var(--fm-border);
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      padding-top:10px;
-      gap:6px;
-      box-shadow:0 0 10px rgba(0,0,0,0.9);
-      z-index:15;
+    .fm-latency-label {
+      font-size: 10px;
+      color: var(--fm-text-muted);
     }
 
-    .fm-tool-btn {
-      width:30px;
-      height:30px;
-      border-radius:6px;
-      border:1px solid #1a1a1a;
-      background:#080808;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      cursor:pointer;
-      position:relative;
-      transition:0.15s;
-      color:#cfcfcf;
-      font-size:15px;
+    /* ---------- MAIN LAYOUT ---------- */
+
+    .fm-main {
+      flex: 1;
+      display: flex;
+      min-height: 0;
     }
 
-    .fm-tool-btn:hover {
-      border-color:var(--fm-neon-soft);
-      box-shadow:0 0 8px var(--fm-neon-soft);
-      color:var(--fm-neon);
+    /* LEFT TOOLBAR */
+
+    .fm-left-toolbar {
+      width: 52px;
+      background: linear-gradient(to bottom, #050810 0, #040611 55%, #020309 100%);
+      border-right: 1px solid #0a1019;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 10px;
+      gap: 6px;
+      position: relative;
     }
 
-    .fm-tool-btn.active {
-      background:#101c10;
-      border-color:var(--fm-neon);
-      box-shadow:0 0 10px var(--fm-neon-soft);
-      color:var(--fm-neon);
+    .fm-tool-button {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      border: 1px solid rgba(83, 102, 132, 0.45);
+      background: radial-gradient(circle at 0 0, rgba(46, 242, 126, 0.18), #050814);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--fm-text-main);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 110ms ease-out;
+      position: relative;
     }
 
-    .fm-tool-btn.group {
-      border-style:solid;
+    .fm-tool-button span {
+      font-size: 13px;
+      font-weight: 600;
     }
 
-    .fm-icon-select { font-size:13px; }
-    .fm-icon-crosshair { font-size:16px; }
-
-    .fm-icon-line {
-      width:18px; height:2px;
-      background:currentColor;
-      border-radius:1px;
-    }
-    .fm-icon-hline {
-      width:18px; height:2px;
-      background:currentColor;
-      border-radius:1px;
-    }
-    .fm-icon-vline {
-      width:2px; height:18px;
-      background:currentColor;
-      border-radius:1px;
-    }
-    .fm-icon-rect {
-      width:16px; height:10px;
-      border-radius:2px;
-      border:1px solid currentColor;
-    }
-    .fm-icon-fib {
-      width:18px; height:10px;
-      position:relative;
-    }
-    .fm-icon-fib::before,
-    .fm-icon-fib::after {
-      content:"";
-      position:absolute;
-      left:0; right:0;
-      height:1px;
-      background:currentColor;
-    }
-    .fm-icon-fib::before { top:2px; }
-    .fm-icon-fib::after  { bottom:2px; }
-
-    .fm-icon-text { font-size:14px; font-weight:bold; }
-    .fm-icon-rr {
-      width:16px; height:10px;
-      border-radius:2px;
-      border:1px solid currentColor;
-      border-left-width:3px;
-    }
-    .fm-icon-eraser {
-      width:14px; height:10px;
-      border-radius:2px;
-      border:1px solid currentColor;
-      transform:skewX(-15deg);
+    .fm-tool-button:hover {
+      border-color: rgba(46, 242, 126, 0.75);
+      box-shadow: 0 0 18px rgba(46, 242, 126, 0.5);
+      transform: translateY(-1px);
     }
 
-    /* Tooltips */
-    .fm-tool-btn::after {
-      content:attr(data-label);
-      position:absolute;
-      left:42px;
-      top:50%;
-      transform:translateY(-50%);
-      background:rgba(10,10,10,0.95);
-      border:1px solid var(--fm-border);
-      color:#ddd;
-      font-size:11px;
-      padding:4px 8px;
-      border-radius:4px;
-      white-space:nowrap;
-      opacity:0;
-      pointer-events:none;
-      transition:0.12s;
-      box-shadow:0 6px 12px rgba(0,0,0,0.8);
-      z-index:80;
-    }
-    .fm-tool-btn:hover::after {
-      opacity:1;
+    .fm-tool-button.active {
+      border-color: rgba(46, 242, 126, 0.9);
+      box-shadow: 0 0 20px rgba(46, 242, 126, 0.8);
     }
 
-    /************************************************************
-       LEFT TOOL SUBMENUS
-    ************************************************************/
-    #fm-left-submenus {
-      position:absolute;
-      top:42px;
-      bottom:26px;
-      left:46px;
-      pointer-events:none;
-      z-index:30;
+    .fm-tool-label {
+      position: absolute;
+      left: 48px;
+      white-space: nowrap;
+      font-size: 10px;
+      padding: 3px 7px;
+      border-radius: 6px;
+      background: rgba(3, 7, 16, 0.98);
+      border: 1px solid rgba(255,255,255,0.06);
+      color: var(--fm-text-muted);
+      pointer-events: none;
+      opacity: 0;
+      transform: translateX(-2px);
+      transition: opacity 100ms ease-out, transform 100ms ease-out;
     }
 
-    .fm-tool-submenu {
-      position:absolute;
-      top:10px;
-      left:0;
-      min-width:190px;
-      background:#050505;
-      border-radius:6px;
-      border:1px solid var(--fm-border);
-      box-shadow:0 10px 18px rgba(0,0,0,0.85),
-                 0 0 14px rgba(46,242,126,0.18);
-      padding:6px 0;
-      display:none;
-      pointer-events:auto;
+    .fm-tool-button:hover .fm-tool-label {
+      opacity: 1;
+      transform: translateX(0);
     }
 
-    .fm-tool-submenu-header {
-      padding:4px 10px;
-      font-size:11px;
-      text-transform:uppercase;
-      letter-spacing:0.05em;
-      color:#666;
+    /* LEFT DRAWER (e.g. Text & Annotations) */
+
+    .fm-left-drawer {
+      position: absolute;
+      top: 10px;
+      left: 52px;
+      width: 220px;
+      background: radial-gradient(circle at top, #151d32 0, #050814 55%, #02030a 100%);
+      border-radius: 10px;
+      border: 1px solid rgba(46, 242, 126, 0.35);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.85);
+      padding: 8px 0;
+      font-size: 11px;
+      z-index: 30;
+      display: none;
     }
 
-    .fm-tool-subitem {
-      padding:6px 10px;
-      font-size:12px;
-      color:#d0d0d0;
-      cursor:pointer;
-      white-space:nowrap;
-    }
-    .fm-tool-subitem span {
-      font-size:11px;
-      color:#555;
-    }
-    .fm-tool-subitem:hover {
-      background:rgba(46,242,126,0.12);
-      color:var(--fm-neon);
+    .fm-left-drawer.visible {
+      display: block;
     }
 
-    .fm-tool-submenu-divider {
-      height:1px;
-      background:#181818;
-      margin:4px 8px;
+    .fm-left-drawer-header {
+      padding: 4px 12px 2px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 9px;
+      color: var(--fm-text-muted);
     }
 
-    /************************************************************
-       CHART AREA + PRICE RAIL
-    ************************************************************/
-    #fm-chart-wrap {
-      position:absolute;
-      top:42px;
-      bottom:26px;
-      left:0;
-      right:0;
-      background:#000;
-      padding-left:46px;   /* left tools */
-      padding-right:84px;  /* price rail */
-      z-index:10;
+    .fm-left-drawer-item {
+      padding: 6px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      color: var(--fm-text-main);
     }
 
-    #flo-chart {
-      width:100%;
-      height:100%;
-      background:#000;
-      position:relative;
+    .fm-left-drawer-item span.fm-drawer-muted {
+      font-size: 10px;
+      color: var(--fm-text-muted);
     }
 
-    /* Right-side price rail */
-    #fm-price-rail {
-      position:absolute;
-      top:42px;
-      bottom:26px;
-      right:0;
-      width:84px;
-      background:linear-gradient(to right,#050505,#070707);
-      border-left:1px solid #151515;
-      box-shadow:0 0 10px rgba(0,0,0,0.9);
-      z-index:18;
-      display:flex;
-      flex-direction:column;
-      justify-content:space-between;
-      padding:8px 6px 8px 2px;
-      font-size:10px;
+    .fm-left-drawer-item:hover {
+      background: rgba(46,242,126,0.12);
+    }
+
+    .fm-left-drawer-separator {
+      height: 1px;
+      margin: 6px 8px;
+      background: linear-gradient(to right, rgba(46, 242, 126, 0.6), rgba(255,255,255,0.03));
+      opacity: 0.5;
+    }
+
+    /* CHART + PRICE RAIL */
+
+    .fm-chart-region {
+      flex: 1;
+      display: flex;
+      flex-direction: row;
+      min-width: 0;
+      min-height: 0;
+    }
+
+    .fm-chart-area {
+      flex: 1;
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+    }
+
+    #chart-container {
+      position: absolute;
+      inset: 0;
+    }
+
+    .fm-price-rail {
+      width: 72px;
+      border-left: 1px solid #0b1018;
+      background: radial-gradient(circle at 0 50%, #050910 0, #020308 70%, #000000 100%);
+      font-size: 10px;
+      color: var(--fm-text-muted);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 8px 6px 6px;
     }
 
     .fm-price-rail-header {
-      text-align:center;
-      color:#555;
-      text-transform:uppercase;
-      letter-spacing:0.08em;
-      font-size:9px;
+      text-align: right;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 9px;
+      margin-bottom: 8px;
     }
 
-    .fm-price-ticks {
-      flex:1;
-      position:relative;
-      margin-top:4px;
-      margin-bottom:4px;
+    .fm-price-rail-last {
+      align-self: flex-end;
+      margin-top: 6px;
+      margin-bottom: auto;
     }
 
-    .fm-price-tick {
-      position:absolute;
-      left:0;
-      right:0;
-      height:1px;
-      background:#111;
-    }
-    .fm-price-tick-label {
-      position:absolute;
-      right:0;
-      top:-7px;
-      padding-left:4px;
-      font-size:10px;
-      color:#777;
-      background:rgba(0,0,0,0.9);
+    .fm-price-bubble {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 0 50%, #2ef27e 0, #00b04f 45%, #00351a 100%);
+      color: #00110a;
+      font-size: 11px;
+      font-weight: 600;
+      box-shadow: 0 0 24px rgba(46, 242, 126, 0.7);
     }
 
-    .fm-price-rail-footer {
-      display:flex;
-      flex-direction:column;
-      gap:4px;
-      font-size:10px;
-      color:#666;
+    .fm-price-change {
+      font-size: 9px;
+      font-weight: 500;
+      padding: 1px 5px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.55);
+      color: #8cf7b7;
     }
 
-    .fm-bid-row, .fm-ask-row {
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      padding:2px 4px;
-      border-radius:4px;
-      background:#050505;
-    }
-    .fm-bid-row span.label { color:var(--fm-bid); }
-    .fm-ask-row span.label { color:var(--fm-ask); }
-
-    /************************************************************
-       LAST PRICE BUBBLE (floats over right edge)
-    ************************************************************/
-    #fm-last-price {
-      position:absolute;
-      right:0;
-      top:50%;
-      transform:translateY(-50%);
-      padding:3px 10px;
-      border-radius:12px 0 0 12px;
-      background:linear-gradient(to right,#020617,#059669);
-      border:1px solid #16a34a;
-      color:#e5ffe9;
-      font-size:12px;
-      display:flex;
-      align-items:center;
-      gap:6px;
-      box-shadow:
-        0 0 12px rgba(46,242,126,0.55),
-        0 0 20px rgba(22,163,101,0.65);
-      z-index:25;
-    }
-    #fm-last-price .dot {
-      width:7px;height:7px;border-radius:50%;
-      background:var(--fm-neon);
-      box-shadow:0 0 6px var(--fm-neon-soft);
-    }
-    #fm-last-price .price-text {
-      font-weight:500;
-      letter-spacing:0.03em;
-    }
-    #fm-last-price .change {
-      font-size:10px;
-      color:#9be8b9;
+    .fm-price-rail-bids {
+      text-align: right;
+      font-size: 9px;
+      margin-bottom: 3px;
     }
 
-    /************************************************************
-       TIME RAIL
-    ************************************************************/
-    #fm-time-rail {
-      position:absolute;
-      bottom:0;
-      left:0; right:0;
-      height:26px;
-      background:#050505;
-      border-top:1px solid var(--fm-border);
-      box-shadow:0 -1px 6px var(--fm-neon-soft);
-      display:flex;justify-content:space-between;
-      align-items:center;
-      padding:0 16px;
-      font-size:11px;color:#777;
-      z-index:20;
+    .fm-price-rail-bids span.fm-label {
+      color: var(--fm-text-muted);
+      margin-right: 4px;
+    }
+
+    /* BOTTOM BAR */
+
+    .fm-bottombar {
+      height: 26px;
+      border-top: 1px solid #0b1018;
+      background: linear-gradient(to right, #050810 0, #03050b 50%, #050810 100%);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+      font-size: 10px;
+      color: var(--fm-text-muted);
+    }
+
+    .fm-bottombar-left,
+    .fm-bottombar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .fm-session-pill {
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(46, 242, 126, 0.4);
+      background: rgba(4, 8, 11, 0.95);
+      color: var(--fm-text-main);
+    }
+
+    .fm-status-disconnected {
+      color: rgba(255, 102, 140, 0.8);
     }
   </style>
 </head>
 
 <body>
+<div class="fm-shell">
 
-<div id="fm-shell">
-
-  <!-- Neon blades -->
-  <div id="blade-tl" class="fm-blade"></div>
-  <div id="blade-tr" class="fm-blade"></div>
-  <div id="blade-bl" class="fm-blade"></div>
-  <div id="blade-br" class="fm-blade"></div>
-
-  <!-- MENU BAR -->
-  <div id="fm-menubar">
-
-    <div id="fm-logo-dot"></div>
-    <div id="fm-title">FLOMATRIX</div>
-    <div id="fm-symbol">BTCUSD</div>
-
-    <div class="fm-menu-bar">
-
-      <!-- MARKETS -->
-      <div class="fm-menu">
-        <div class="fm-menu-title">Markets ▾</div>
-        <div class="fm-menu-panel">
-          <div class="fm-menu-header">Asset Classes</div>
-          <div class="fm-menu-item">Crypto – Spot</div>
-          <div class="fm-menu-item">Crypto – Perpetuals</div>
-          <div class="fm-menu-item">Futures – CME / NYMEX</div>
-          <div class="fm-menu-item">Equities – NASDAQ / NYSE</div>
-          <div class="fm-menu-item">Options (placeholder)</div>
-          <div class="fm-menu-item">FX – Majors + Exotic</div>
-          <div class="fm-menu-separator"></div>
-          <div class="fm-menu-item">Market Scanner…</div>
-          <div class="fm-menu-item">Watchlists…</div>
+  <!-- TOP BAR -->
+  <header class="fm-topbar">
+    <div class="fm-topbar-left">
+      <div class="fm-logo-block">
+        <div class="fm-logo-icon"></div>
+        <div class="fm-logo-text-block">
+          <div class="fm-logo-title">FloMatrix</div>
+          <div class="fm-logo-subtitle">Institutional Orderflow for Everyday Traders</div>
         </div>
       </div>
 
-      <!-- TIMEFRAMES -->
-      <div class="fm-menu">
-        <div class="fm-menu-title">Timeframes ▾</div>
-        <div class="fm-menu-panel">
-          <div class="fm-menu-header">Ultra-Fast</div>
-          <div class="fm-menu-item">1s</div>
-          <div class="fm-menu-item">5s</div>
-          <div class="fm-menu-item">15s</div>
-          <div class="fm-menu-separator"></div>
-          <div class="fm-menu-header">Scalp</div>
-          <div class="fm-menu-item">30s</div>
-          <div class="fm-menu-item">1m</div>
-          <div class="fm-menu-item">2m</div>
-          <div class="fm-menu-item">3m</div>
-          <div class="fm-menu-separator"></div>
-          <div class="fm-menu-header">Intraday</div>
-          <div class="fm-menu-item">5m</div>
-          <div class="fm-menu-item">15m</div>
-          <div class="fm-menu-item">30m</div>
-          <div class="fm-menu-separator"></div>
-          <div class="fm-menu-header">Higher Timeframe</div>
-          <div class="fm-menu-item">1h</div>
-          <div class="fm-menu-item">2h</div>
-          <div class="fm-menu-item">4h</div>
-          <div class="fm-menu-item">1D</div>
-          <div class="fm-menu-item">1W</div>
-          <div class="fm-menu-item">1M</div>
-          <div class="fm-menu-separator"></div>
-          <div class="fm-menu-item">Custom timeframes…</div>
+      <button class="fm-symbol-pill">
+        BTCUSD
+        <span class="fm-symbol-tf">paper</span>
+      </button>
+
+      <nav class="fm-menu-row">
+
+        <!-- Markets -->
+        <div class="fm-menu-item">
+          Markets
+          <div class="fm-menu-dropdown">
+            <div class="fm-menu-section-title">Crypto</div>
+            <div class="fm-menu-option">BTCUSD<span class="fm-option-muted">Spot / Perp</span></div>
+            <div class="fm-menu-option">ETHUSD<span class="fm-option-muted">Spot / Perp</span></div>
+            <div class="fm-menu-option">SOLUSD<span class="fm-option-muted">High Vola</span></div>
+            <div class="fm-menu-separator"></div>
+
+            <div class="fm-menu-section-title">Futures</div>
+            <div class="fm-menu-option">ES (S&amp;P 500)<span class="fm-option-muted">CME</span></div>
+            <div class="fm-menu-option">NQ (Nasdaq)<span class="fm-option-muted">CME</span></div>
+            <div class="fm-menu-option">CL (Crude)<span class="fm-option-muted">NYMEX</span></div>
+          </div>
+        </div>
+
+        <!-- Timeframes -->
+        <div class="fm-menu-item">
+          Timeframes
+          <div class="fm-menu-dropdown">
+            <div class="fm-menu-section-title">Scalping</div>
+            <div class="fm-menu-option">15s / 30s<span class="fm-option-muted">Tape-driven</span></div>
+            <div class="fm-menu-option">1m / 3m</div>
+            <div class="fm-menu-option">5m</div>
+            <div class="fm-menu-separator"></div>
+
+            <div class="fm-menu-section-title">Swing</div>
+            <div class="fm-menu-option">15m</div>
+            <div class="fm-menu-option">1h</div>
+            <div class="fm-menu-option">4h</div>
+            <div class="fm-menu-option">1D</div>
+          </div>
+        </div>
+
+        <!-- Indicators -->
+        <div class="fm-menu-item">
+          Indicators
+          <div class="fm-menu-dropdown">
+            <div class="fm-menu-section-title">Orderflow</div>
+            <div class="fm-menu-option">Footprint / Delta map</div>
+            <div class="fm-menu-option">Cumulative delta</div>
+            <div class="fm-menu-option">Volume profile (session)</div>
+            <div class="fm-menu-option">DOM imbalance heatmap</div>
+            <div class="fm-menu-separator"></div>
+
+            <div class="fm-menu-section-title">Classic</div>
+            <div class="fm-menu-option">EMA / SMA stack</div>
+            <div class="fm-menu-option">VWAP (session / anchored)</div>
+            <div class="fm-menu-option">RSI / Stoch / MACD</div>
+          </div>
+        </div>
+
+        <!-- Drawing Tools -->
+        <div class="fm-menu-item">
+          Drawing Tools
+          <div class="fm-menu-dropdown">
+            <div class="fm-menu-section-title">Price action</div>
+            <div class="fm-menu-option">Ray / Trend line</div>
+            <div class="fm-menu-option">Horizontal level</div>
+            <div class="fm-menu-option">Zone box</div>
+            <div class="fm-menu-separator"></div>
+
+            <div class="fm-menu-section-title">Risk &amp; R:R</div>
+            <div class="fm-menu-option">Long position tool<span class="fm-option-muted">R:R box</span></div>
+            <div class="fm-menu-option">Short position tool</div>
+          </div>
+        </div>
+
+        <!-- Strategy -->
+        <div class="fm-menu-item">
+          Strategy
+          <div class="fm-menu-dropdown">
+            <div class="fm-menu-section-title">Execution</div>
+            <div class="fm-menu-option">Paper engine<span class="fm-option-muted">active</span></div>
+            <div class="fm-menu-option">Live brokerage link</div>
+            <div class="fm-menu-separator"></div>
+
+            <div class="fm-menu-section-title">Backtesting</div>
+            <div class="fm-menu-option">Replay session</div>
+            <div class="fm-menu-option">Portfolio walk-forward</div>
+          </div>
+        </div>
+
+        <!-- Journal -->
+        <div class="fm-menu-item">
+          Journal
+          <div class="fm-menu-dropdown">
+            <div class="fm-menu-section-title">AI Journal</div>
+            <div class="fm-menu-option">New tagged trade note</div>
+            <div class="fm-menu-option">Review last 10 trades</div>
+            <div class="fm-menu-option">Bias &amp; discipline score</div>
+          </div>
+        </div>
+
+        <!-- Tools -->
+        <div class="fm-menu-item">
+          Tools
+          <div class="fm-menu-dropdown">
+            <div class="fm-menu-section-title">Overlays</div>
+            <div class="fm-menu-option">Multi-panel layout</div>
+            <div class="fm-menu-option">DOM / Tape dock</div>
+            <div class="fm-menu-option">Correlation matrix</div>
+          </div>
+        </div>
+
+        <!-- Settings -->
+        <div class="fm-menu-item">
+          Settings
+          <div class="fm-menu-dropdown">
+            <div class="fm-menu-section-title">Appearance</div>
+            <div class="fm-menu-option">Theme<span class="fm-option-muted">Neon institutional</span></div>
+            <div class="fm-menu-option">Grid / axis style</div>
+            <div class="fm-menu-separator"></div>
+            <div class="fm-menu-section-title">Engine</div>
+            <div class="fm-menu-option">FloEngine mode<span class="fm-option-muted">GPU</span></div>
+            <div class="fm-menu-option">Data sources</div>
+          </div>
+        </div>
+
+      </nav>
+    </div>
+
+    <div class="fm-topbar-right">
+      <div class="fm-pill-status">
+        <span class="fm-dot"></span>
+        Paper mode
+      </div>
+      <div class="fm-latency-label">Latency &lt; 4 ms</div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <div class="fm-main">
+    <!-- Left toolbar -->
+    <aside class="fm-left-toolbar">
+      <!-- Text & annotations -->
+      <button class="fm-tool-button" data-tool="text">
+        <span>T</span>
+        <div class="fm-tool-label">Text &amp; annotations</div>
+      </button>
+      <button class="fm-tool-button" data-tool="trend">
+        <span>/</span>
+        <div class="fm-tool-label">Trend / Ray</div>
+      </button>
+      <button class="fm-tool-button" data-tool="hline">
+        <span>─</span>
+        <div class="fm-tool-label">Horizontal line</div>
+      </button>
+      <button class="fm-tool-button" data-tool="box">
+        <span>▢</span>
+        <div class="fm-tool-label">Zone / Region</div>
+      </button>
+      <button class="fm-tool-button" data-tool="arrow">
+        <span>↑</span>
+        <div class="fm-tool-label">Arrow / Marker</div>
+      </button>
+      <button class="fm-tool-button" data-tool="rr">
+        <span>R:R</span>
+        <div class="fm-tool-label">Risk / Reward tool</div>
+      </button>
+      <button class="fm-tool-button" data-tool="clear">
+        <span>⨯</span>
+        <div class="fm-tool-label">Clear drawings</div>
+      </button>
+
+      <!-- Drawer: TEXT & ANNOTATIONS -->
+      <div id="fm-text-drawer" class="fm-left-drawer">
+        <div class="fm-left-drawer-header">TEXT &amp; ANNOTATIONS</div>
+        <div class="fm-left-drawer-item">
+          Plain label
+          <span class="fm-drawer-muted">T</span>
+        </div>
+        <div class="fm-left-drawer-item">
+          Callout bubble
+          <span class="fm-drawer-muted">Shift+T</span>
+        </div>
+        <div class="fm-left-drawer-item">
+          Arrow label
+          <span class="fm-drawer-muted">Alt+T</span>
+        </div>
+        <div class="fm-left-drawer-separator"></div>
+        <div class="fm-left-drawer-item">
+          Note to journal (link trade)
+        </div>
+        <div class="fm-left-drawer-item">
+          Emotion tag: 🧠 / 😓 / 😈
+        </div>
+        <div class="fm-left-drawer-separator"></div>
+        <div class="fm-left-drawer-item">
+          Save annotation preset…
         </div>
       </div>
+    </aside>
 
-      <!-- INDICATORS -->
-      <div class="fm-menu">
-        <div class="fm-menu-title">Indicators ▾</div>
-        <div class="fm-menu-panel">
+    <!-- Chart & price rail -->
+    <div class="fm-chart-region">
+      <section class="fm-chart-area">
+        <div id="chart-container"></div>
+      </section>
 
-          <div class="fm-menu-item has-sub">Trend
-            <div class="fm-submenu">
-              <div class="fm-menu-item">EMA / SMA / WMA / HMA</div>
-              <div class="fm-menu-item">VWAP / Anchored VWAP</div>
-              <div class="fm-menu-item">SuperTrend</div>
-              <div class="fm-menu-item">Donchian Channels</div>
-              <div class="fm-menu-item">Ichimoku</div>
-              <div class="fm-menu-item">MA Ribbon</div>
+      <aside class="fm-price-rail">
+        <div>
+          <div class="fm-price-rail-header">PRICE</div>
+          <div class="fm-price-rail-last">
+            <div class="fm-price-bubble">
+              <span id="fm-last-price">66,420.75</span>
+              <span class="fm-price-change" id="fm-last-change">+1.32%</span>
             </div>
           </div>
+        </div>
 
-          <div class="fm-menu-item has-sub">Momentum
-            <div class="fm-submenu">
-              <div class="fm-menu-item">RSI</div>
-              <div class="fm-menu-item">Stochastic</div>
-              <div class="fm-menu-item">MACD</div>
-              <div class="fm-menu-item">Williams %R</div>
-              <div class="fm-menu-item">Awesome Oscillator</div>
-            </div>
+        <div>
+          <div class="fm-price-rail-bids">
+            <span class="fm-label">Bid</span><span id="fm-bid">66,418.5</span>
           </div>
-
-          <div class="fm-menu-item has-sub">Volatility
-            <div class="fm-submenu">
-              <div class="fm-menu-item">ATR</div>
-              <div class="fm-menu-item">Bollinger Bands</div>
-              <div class="fm-menu-item">Keltner Channels</div>
-              <div class="fm-menu-item">Range Detector</div>
-            </div>
+          <div class="fm-price-rail-bids">
+            <span class="fm-label">Ask</span><span id="fm-ask">66,423.0</span>
           </div>
-
-          <div class="fm-menu-item has-sub">Volume / Orderflow
-            <div class="fm-submenu">
-              <div class="fm-menu-item">Session Volume Profile</div>
-              <div class="fm-menu-item">Fixed Range Profile</div>
-              <div class="fm-menu-item">CVD</div>
-              <div class="fm-menu-item">Bid/Ask Delta Bars</div>
-              <div class="fm-menu-item">Imbalance Clusters</div>
-              <div class="fm-menu-item">Iceberg Detector</div>
-              <div class="fm-menu-item">Absorption Zones</div>
-            </div>
-          </div>
-
-          <div class="fm-menu-item has-sub">Math / Advanced
-            <div class="fm-submenu">
-              <div class="fm-menu-item">Linear Regression</div>
-              <div class="fm-menu-item">Polynomial Regression</div>
-              <div class="fm-menu-item">Z-Score Bands</div>
-              <div class="fm-menu-item">FFT / Spectral</div>
-            </div>
-          </div>
-
-          <div class="fm-menu-separator"></div>
-          <div class="fm-menu-item">Indicator Manager…</div>
         </div>
-      </div>
-
-      <!-- DRAWING TOOLS MENU -->
-      <div class="fm-menu">
-        <div class="fm-menu-title">Drawing Tools ▾</div>
-        <div class="fm-menu-panel">
-          <div class="fm-menu-header">Lines</div>
-          <div class="fm-menu-item">Trendline</div>
-          <div class="fm-menu-item">Horizontal Line</div>
-          <div class="fm-menu-item">Vertical Line</div>
-          <div class="fm-menu-item">Rays</div>
-          <div class="fm-menu-separator"></div>
-          <div class="fm-menu-header">Fibonacci</div>
-          <div class="fm-menu-item">Retracement</div>
-          <div class="fm-menu-item">Extension</div>
-          <div class="fm-menu-item">Time Zones</div>
-          <div class="fm-menu-item">Fib Channel</div>
-          <div class="fm-menu-separator"></div>
-          <div class="fm-menu-header">Shapes &amp; Text</div>
-          <div class="fm-menu-item">Rectangle</div>
-          <div class="fm-menu-item">Parallel Channel</div>
-          <div class="fm-menu-item">Ellipse</div>
-          <div class="fm-menu-item">Text / Note</div>
-          <div class="fm-menu-item">Risk/Reward Box</div>
-        </div>
-      </div>
-
-      <!-- STRATEGY -->
-      <div class="fm-menu">
-        <div class="fm-menu-title">Strategy ▾</div>
-        <div class="fm-menu-panel">
-          <div class="fm-menu-header">Backtesting</div>
-          <div class="fm-menu-item">Run Backtest…</div>
-          <div class="fm-menu-item">Walk-Forward Analysis</div>
-          <div class="fm-menu-item">Monte Carlo Simulation</div>
-          <div class="fm-menu-separator"></div>
-          <div class="fm-menu-header">Builder</div>
-          <div class="fm-menu-item">Visual Strategy Builder</div>
-          <div class="fm-menu-item">Code Editor (script)</div>
-          <div class="fm-menu-separator"></div>
-          <div class="fm-menu-header">Optimization</div>
-          <div class="fm-menu-item">Genetic Optimizer</div>
-          <div class="fm-menu-item">Parameter Sweep</div>
-        </div>
-      </div>
-
-      <!-- JOURNAL -->
-      <div class="fm-menu">
-        <div class="fm-menu-title">Journal ▾</div>
-        <div class="fm-menu-panel">
-          <div class="fm-menu-item">Open Live Journal</div>
-          <div class="fm-menu-item">Screenshot to Journal</div>
-          <div class="fm-menu-item">Voice Note Entry</div>
-          <div class="fm-menu-item">Tag Trades &amp; Emotions</div>
-          <div class="fm-menu-item">Export / Sync</div>
-        </div>
-      </div>
-
-      <!-- TOOLS -->
-      <div class="fm-menu">
-        <div class="fm-menu-title">Tools ▾</div>
-        <div class="fm-menu-panel">
-          <div class="fm-menu-header">Market Analysis</div>
-          <div class="fm-menu-item">Replay Mode</div>
-          <div class="fm-menu-item">Pattern Detector</div>
-          <div class="fm-menu-item">AI Signal Explain</div>
-          <div class="fm-menu-separator"></div>
-          <div class="fm-menu-header">Orderflow</div>
-          <div class="fm-menu-item">DOM (Depth of Market)</div>
-          <div class="fm-menu-item">Footprint Chart</div>
-          <div class="fm-menu-item">Heatmap (Liquidity)</div>
-        </div>
-      </div>
-
-      <!-- SETTINGS -->
-      <div class="fm-menu">
-        <div class="fm-menu-title">Settings ▾</div>
-        <div class="fm-menu-panel">
-          <div class="fm-menu-header">Theme</div>
-          <div class="fm-menu-item">FloMatrix Dark</div>
-          <div class="fm-menu-item">Neon Hard Mode</div>
-          <div class="fm-menu-item">Minimal Grey</div>
-          <div class="fm-menu-separator"></div>
-          <div class="fm-menu-header">System</div>
-          <div class="fm-menu-item">Hotkeys</div>
-          <div class="fm-menu-item">Broker Connections</div>
-          <div class="fm-menu-item">API Keys</div>
-          <div class="fm-menu-item">Cloud Backup</div>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- RIGHT STATUS -->
-    <div id="fm-menubar-right">
-      <div id="fm-latency-dot"></div>
-      <div>Paper mode</div>
-      <div>|</div>
-      <div>Latency &lt; 4ms</div>
-    </div>
-
-  </div>
-
-  <!-- LEFT TOOLBAR -->
-  <div id="fm-left-tools">
-    <div class="fm-tool-btn active" data-label="Select / Pan" data-tool="select">
-      <span class="fm-icon-select">▢</span>
-    </div>
-    <div class="fm-tool-btn" data-label="Precision Crosshair" data-tool="crosshair">
-      <span class="fm-icon-crosshair">✚</span>
-    </div>
-
-    <div class="fm-tool-btn group" data-label="Lines family" data-tool="lines">
-      <div class="fm-icon-line"></div>
-    </div>
-
-    <div class="fm-tool-btn group" data-label="Fibonacci tools" data-tool="fib">
-      <div class="fm-icon-fib"></div>
-    </div>
-
-    <div class="fm-tool-btn group" data-label="Zones / Rectangles" data-tool="zones">
-      <div class="fm-icon-rect"></div>
-    </div>
-
-    <div class="fm-tool-btn group" data-label="Text / Callouts" data-tool="text">
-      <span class="fm-icon-text">T</span>
-    </div>
-
-    <div class="fm-tool-btn group" data-label="Risk/Reward tools" data-tool="rr">
-      <div class="fm-icon-rr"></div>
-    </div>
-
-    <div class="fm-tool-btn" data-label="Erase / Remove drawing" data-tool="eraser">
-      <div class="fm-icon-eraser"></div>
+      </aside>
     </div>
   </div>
 
-  <!-- LEFT TOOL SUBMENUS -->
-  <div id="fm-left-submenus">
-    <!-- Lines submenu -->
-    <div class="fm-tool-submenu" data-for="lines">
-      <div class="fm-tool-submenu-header">Lines &amp; Rays</div>
-      <div class="fm-tool-subitem">Basic trendline <span>• free anchor</span></div>
-      <div class="fm-tool-subitem">Ray (extends right)</div>
-      <div class="fm-tool-subitem">Horizontal line</div>
-      <div class="fm-tool-subitem">Horizontal ray</div>
-      <div class="fm-tool-subitem">Vertical line</div>
-      <div class="fm-tool-submenu-divider"></div>
-      <div class="fm-tool-subitem">Extended trendline (both sides)</div>
-      <div class="fm-tool-subitem">Ray with mid-point handle</div>
-      <div class="fm-tool-submenu-divider"></div>
-      <div class="fm-tool-subitem">Magnet mode on/off</div>
-      <div class="fm-tool-subitem">Snap to OHLC</div>
+  <!-- BOTTOM BAR -->
+  <footer class="fm-bottombar">
+    <div class="fm-bottombar-left">
+      <div class="fm-session-pill">UTC • Session: Crypto</div>
+      <div>Time axis – session</div>
     </div>
-
-    <!-- Fib submenu -->
-    <div class="fm-tool-submenu" data-for="fib">
-      <div class="fm-tool-submenu-header">Fibonacci Suite</div>
-      <div class="fm-tool-subitem">Fib retracement (classic levels)</div>
-      <div class="fm-tool-subitem">Fib retracement (custom template)</div>
-      <div class="fm-tool-subitem">Fib extension (targets)</div>
-      <div class="fm-tool-subitem">Fib fan / time</div>
-      <div class="fm-tool-submenu-divider"></div>
-      <div class="fm-tool-subitem">Auto "golden zone" highlight</div>
-      <div class="fm-tool-subitem">Show confluence bands</div>
-      <div class="fm-tool-subitem">Save fib preset…</div>
+    <div class="fm-bottombar-right">
+      <div class="fm-status-disconnected">Orderflow: Disconnected</div>
     </div>
-
-    <!-- Zones / rectangles submenu -->
-    <div class="fm-tool-submenu" data-for="zones">
-      <div class="fm-tool-submenu-header">Zones &amp; Regions</div>
-      <div class="fm-tool-subitem">Plain rectangle</div>
-      <div class="fm-tool-subitem">Premium/discount zone</div>
-      <div class="fm-tool-subitem">Liquidity sweep zone</div>
-      <div class="fm-tool-submenu-divider"></div>
-      <div class="fm-tool-subitem">Auto label: Demand / Supply</div>
-      <div class="fm-tool-subitem">Opacity presets (20 / 40 / 60%)</div>
-      <div class="fm-tool-subitem">Snap to wick extremes</div>
-    </div>
-
-    <!-- Text submenu -->
-    <div class="fm-tool-submenu" data-for="text">
-      <div class="fm-tool-submenu-header">Text &amp; Annotations</div>
-      <div class="fm-tool-subitem">Plain label</div>
-      <div class="fm-tool-subitem">Callout bubble</div>
-      <div class="fm-tool-subitem">Arrow label</div>
-      <div class="fm-tool-submenu-divider"></div>
-      <div class="fm-tool-subitem">Note to journal (link trade)</div>
-      <div class="fm-tool-subitem">Emotion tag: 🧠 / 😤 / 😴</div>
-      <div class="fm-tool-subitem">Save annotation preset…</div>
-    </div>
-
-    <!-- Risk/Reward submenu -->
-    <div class="fm-tool-submenu" data-for="rr">
-      <div class="fm-tool-submenu-header">Risk / Reward Tools</div>
-      <div class="fm-tool-subitem">Long position box (BUY RR)</div>
-      <div class="fm-tool-subitem">Short position box (SELL RR)</div>
-      <div class="fm-tool-subitem">Mirror RR (flip long/short)</div>
-      <div class="fm-tool-submenu-divider"></div>
-      <div class="fm-tool-subitem">Multi-target RR (T1 / T2 / T3)</div>
-      <div class="fm-tool-subitem">Partial exit ladder</div>
-      <div class="fm-tool-subitem">Auto size by % risk</div>
-      <div class="fm-tool-subitem">Auto size by fixed $ risk</div>
-      <div class="fm-tool-submenu-divider"></div>
-      <div class="fm-tool-subitem">Save RR template (crypto)</div>
-      <div class="fm-tool-subitem">Save RR template (futures)</div>
-      <div class="fm-tool-subitem">Set default: 1 : 1.5 : 3</div>
-    </div>
-  </div>
-
-  <!-- CHART AREA -->
-  <div id="fm-chart-wrap">
-    <div id="flo-chart">
-      <!-- last price bubble is visually over chart edge -->
-      <div id="fm-last-price">
-        <div class="dot"></div>
-        <div class="price-text">66,420.75</div>
-        <div class="change">+1.32%</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- RIGHT PRICE RAIL (overlay on top of chart) -->
-  <div id="fm-price-rail">
-    <div class="fm-price-rail-header">PRICE</div>
-    <div class="fm-price-ticks">
-      <!-- static tick levels just for visual structure -->
-      <div class="fm-price-tick" style="top:10%;">
-        <div class="fm-price-tick-label">67,200</div>
-      </div>
-      <div class="fm-price-tick" style="top:30%;">
-        <div class="fm-price-tick-label">66,800</div>
-      </div>
-      <div class="fm-price-tick" style="top:50%;">
-        <div class="fm-price-tick-label">66,400</div>
-      </div>
-      <div class="fm-price-tick" style="top:70%;">
-        <div class="fm-price-tick-label">66,000</div>
-      </div>
-      <div class="fm-price-tick" style="top:90%;">
-        <div class="fm-price-tick-label">65,600</div>
-      </div>
-    </div>
-    <div class="fm-price-rail-footer">
-      <div class="fm-bid-row">
-        <span class="label">Bid</span>
-        <span>66,418.5</span>
-      </div>
-      <div class="fm-ask-row">
-        <span class="label">Ask</span>
-        <span>66,423.0</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- TIME RAIL -->
-  <div id="fm-time-rail">
-    <span>UTC • Session: Crypto</span>
-    <span>Orderflow: Disconnected</span>
-  </div>
-
+  </footer>
 </div>
 
 <script>
-  // Active-state toggling for left toolbar + show/hide submenus
-  const toolButtons = document.querySelectorAll('.fm-tool-btn');
-  const submenus = document.querySelectorAll('.fm-tool-submenu');
+  // ----------------- LEFT TOOLBAR INTERACTION -----------------
 
-  function showSubmenu(key) {
-    submenus.forEach(menu => {
-      if (menu.getAttribute('data-for') === key) {
-        menu.style.display = 'block';
-      } else {
-        menu.style.display = 'none';
-      }
-    });
-  }
+  (function() {
+    const buttons = document.querySelectorAll(".fm-tool-button");
+    const textDrawer = document.getElementById("fm-text-drawer");
 
-  function hideAllSubmenus() {
-    submenus.forEach(menu => menu.style.display = 'none');
-  }
+    buttons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const tool = btn.getAttribute("data-tool");
 
-  toolButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      toolButtons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
+        buttons.forEach(b => b.classList.remove("active"));
 
-      const key = btn.getAttribute('data-tool');
-      if (btn.classList.contains('group')) {
-        showSubmenu(key);
-      } else {
-        hideAllSubmenus();
-      }
+        if (tool === "text") {
+          const visible = textDrawer.classList.toggle("visible");
+          if (visible) {
+            btn.classList.add("active");
+          }
+        } else {
+          textDrawer.classList.remove("visible");
+          btn.classList.add("active");
+        }
+
+        console.log("[FloMatrix] Tool selected:", tool);
+      });
     });
 
-    btn.addEventListener('mouseenter', () => {
-      const key = btn.getAttribute('data-tool');
-      if (btn.classList.contains('group')) {
-        showSubmenu(key);
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".fm-left-toolbar")) {
+        textDrawer.classList.remove("visible");
+        buttons.forEach(b => b.classList.remove("active"));
       }
     });
+  })();
+
+  // ----------------- ANYCHART NEON CANDLE CHART -----------------
+
+  anychart.onDocumentReady(function () {
+    const bull = "#2ef27e";
+    const bear = "#ff4d6b";
+    const bg   = "#000000";
+
+    anychart.theme({
+      background: { fill: bg },
+      defaultFontColor: "#9fb4cc",
+      chart: {
+        background: { fill: bg },
+        padding: 0
+      },
+      crosshair: {
+        enabled: true,
+        yStroke: { color: "#00ffaa", thickness: 1, dash: "4 4" },
+        xStroke: { color: "#00ffaa", thickness: 1, dash: "4 4" }
+      },
+      scroller: {
+        enabled: false
+      }
+    });
+
+    const data = [
+      ["2025-11-27T16:00:00", 91200, 91500, 91000, 91450],
+      ["2025-11-27T16:01:00", 91450, 91750, 91300, 91600],
+      ["2025-11-27T16:02:00", 91600, 91900, 91500, 91800],
+      ["2025-11-27T16:03:00", 91800, 92000, 91700, 91950],
+      ["2025-11-27T16:04:00", 91950, 92200, 91850, 92150]
+    ];
+
+    const table = anychart.data.table();
+    table.addData(data);
+
+    const mapping = table.mapAs({
+      open: 1,
+      high: 2,
+      low: 3,
+      close: 4
+    });
+
+    const chart = anychart.stock();
+    chart.background().fill(bg);
+    chart.padding(0);
+    chart.margin(0);
+
+    const plot = chart.plot(0);
+    plot.background().fill(bg);
+    plot.yGrid().enabled(true);
+    plot.xGrid().enabled(true);
+    plot.xMinorGrid().enabled(false);
+    plot.yMinorGrid().enabled(false);
+    plot.legend(false);
+
+    const series = plot.candlestick(mapping);
+
+    series.fallingFill(bear);
+    series.risingFill(bull);
+    series.fallingStroke(bear);
+    series.risingStroke(bull);
+
+    series.tooltip().useHtml(true);
+    series.tooltip().titleFormat("{%X}");
+    series.tooltip().format(
+      '<span style="color:#2ef27e">Open:</span> {%open}<br/>' +
+      '<span style="color:#2ef27e">High:</span> {%high}<br/>' +
+      '<span style="color:#2ef27e">Low:</span> {%low}<br/>' +
+      '<span style="color:#2ef27e">Close:</span> {%close}'
+    );
+
+    chart.scroller().enabled(false);
+
+    chart.container("chart-container");
+    chart.draw();
   });
-
-  console.log("FloMatrix Terminal v3.4 loaded (price rail + last price bubble + bid/ask band).");
 </script>
 
 </body>

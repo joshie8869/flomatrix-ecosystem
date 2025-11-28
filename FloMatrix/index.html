@@ -2,94 +2,263 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>FloMatrix Terminal — FloEngine v1.0 (WebGL)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FloMatrix Terminal — FloEngine v1.5</title>
   <link rel="stylesheet" href="assets/css/frame.css" />
 </head>
 <body>
-  <div id="fm-shell">
-    <!-- Top bar -->
-    <header id="fm-topbar">
-      <div id="fm-logo-block">
-        <img src="assets/logo-flomatrix.png" alt="FloMatrix" id="fm-logo-img" />
-        <div id="fm-logo-text">
-          <span class="fm-brand-name">FloMatrix</span>
-          <span class="fm-tagline">Institutional Orderflow for Everyday Traders</span>
+  <div class="fm-shell">
+
+    <!-- TOP BAR -->
+    <header class="fm-topbar">
+      <div class="fm-topbar-left">
+        <div class="fm-logo-block">
+          <img src="assets/logo-flomatrix.png" alt="FloMatrix" class="fm-logo-img" />
+          <div class="fm-logo-text-block">
+            <div class="fm-logo-title">FloMatrix</div>
+            <div class="fm-logo-subtitle">Institutional Orderflow for Everyday Traders</div>
+          </div>
         </div>
+
+        <button class="fm-symbol-pill" id="fm-symbol-pill">
+          <span id="fm-symbol">BTCUSD</span>
+          <span class="fm-symbol-tf">paper</span>
+        </button>
+
+        <nav class="fm-menu-row">
+          <!-- Markets -->
+          <div class="fm-menu-item">
+            Markets
+            <div class="fm-menu-dropdown">
+              <div class="fm-menu-section-title">Crypto</div>
+              <div class="fm-menu-option">BTCUSD<span class="fm-option-muted">Spot / Perp</span></div>
+              <div class="fm-menu-option">ETHUSD<span class="fm-option-muted">Spot / Perp</span></div>
+              <div class="fm-menu-option">SOLUSD<span class="fm-option-muted">High vola</span></div>
+              <div class="fm-menu-separator"></div>
+              <div class="fm-menu-section-title">Futures</div>
+              <div class="fm-menu-option">ES<span class="fm-option-muted">CME</span></div>
+              <div class="fm-menu-option">NQ<span class="fm-option-muted">CME</span></div>
+              <div class="fm-menu-option">CL<span class="fm-option-muted">NYMEX</span></div>
+            </div>
+          </div>
+
+          <!-- Timeframes -->
+          <div class="fm-menu-item">
+            Timeframes
+            <div class="fm-menu-dropdown">
+              <div class="fm-menu-section-title">Scalping</div>
+              <div class="fm-menu-option">15s / 30s<span class="fm-option-muted">tape-driven</span></div>
+              <div class="fm-menu-option">1m / 3m</div>
+              <div class="fm-menu-option">5m</div>
+              <div class="fm-menu-separator"></div>
+              <div class="fm-menu-section-title">Swing</div>
+              <div class="fm-menu-option">15m</div>
+              <div class="fm-menu-option">1h</div>
+              <div class="fm-menu-option">4h</div>
+              <div class="fm-menu-option">1D</div>
+            </div>
+          </div>
+
+          <!-- Indicators -->
+          <div class="fm-menu-item">
+            Indicators
+            <div class="fm-menu-dropdown">
+              <div class="fm-menu-section-title">Orderflow</div>
+              <div class="fm-menu-option">Footprint / delta map</div>
+              <div class="fm-menu-option">Cumulative delta</div>
+              <div class="fm-menu-option">Volume profile (session)</div>
+              <div class="fm-menu-option">DOM imbalance heatmap</div>
+              <div class="fm-menu-separator"></div>
+              <div class="fm-menu-section-title">Classic</div>
+              <div class="fm-menu-option">EMA / SMA stack</div>
+              <div class="fm-menu-option">VWAP (session / anchored)</div>
+              <div class="fm-menu-option">RSI / Stoch / MACD</div>
+            </div>
+          </div>
+
+          <!-- Drawing Tools -->
+          <div class="fm-menu-item">
+            Drawing Tools
+            <div class="fm-menu-dropdown">
+              <div class="fm-menu-section-title">Price action</div>
+              <div class="fm-menu-option">Trend line / Ray</div>
+              <div class="fm-menu-option">Horizontal level</div>
+              <div class="fm-menu-option">Zone box</div>
+              <div class="fm-menu-separator"></div>
+              <div class="fm-menu-section-title">Risk &amp; R:R</div>
+              <div class="fm-menu-option">Long position tool<span class="fm-option-muted">R:R box</span></div>
+              <div class="fm-menu-option">Short position tool</div>
+            </div>
+          </div>
+
+          <!-- Strategy -->
+          <div class="fm-menu-item">
+            Strategy
+            <div class="fm-menu-dropdown">
+              <div class="fm-menu-section-title">Execution</div>
+              <div class="fm-menu-option">Paper engine<span class="fm-option-muted">active</span></div>
+              <div class="fm-menu-option">Live brokerage link</div>
+              <div class="fm-menu-separator"></div>
+              <div class="fm-menu-section-title">Backtesting</div>
+              <div class="fm-menu-option">Replay session</div>
+              <div class="fm-menu-option">Portfolio walk-forward</div>
+            </div>
+          </div>
+
+          <!-- Journal -->
+          <div class="fm-menu-item">
+            Journal
+            <div class="fm-menu-dropdown">
+              <div class="fm-menu-section-title">AI Journal</div>
+              <div class="fm-menu-option">New tagged trade note</div>
+              <div class="fm-menu-option">Review last 10 trades</div>
+              <div class="fm-menu-option">Bias &amp; discipline score</div>
+            </div>
+          </div>
+
+          <!-- Tools -->
+          <div class="fm-menu-item">
+            Tools
+            <div class="fm-menu-dropdown">
+              <div class="fm-menu-section-title">Overlays</div>
+              <div class="fm-menu-option">Multi-panel layout</div>
+              <div class="fm-menu-option">DOM / Tape dock</div>
+              <div class="fm-menu-option">Correlation matrix</div>
+            </div>
+          </div>
+
+          <!-- Settings -->
+          <div class="fm-menu-item">
+            Settings
+            <div class="fm-menu-dropdown">
+              <div class="fm-menu-section-title">Appearance</div>
+              <div class="fm-menu-option">Theme<span class="fm-option-muted">Neon institutional</span></div>
+              <div class="fm-menu-option">Grid / axis style</div>
+              <div class="fm-menu-separator"></div>
+              <div class="fm-menu-section-title">Engine</div>
+              <div class="fm-menu-option">FloEngine mode<span class="fm-option-muted">GPU</span></div>
+              <div class="fm-menu-option">Data sources</div>
+            </div>
+          </div>
+        </nav>
       </div>
 
-      <div id="fm-top-center">
-        <span id="fm-symbol-pill">BTCUSD</span>
-        <span id="fm-symbol-mode">• Paper</span>
-      </div>
-
-      <div id="fm-top-right">
-        <span id="fm-latency-dot"></span>
-        <span class="fm-latency-label">Latency &lt; 4 ms</span>
+      <div class="fm-topbar-right">
+        <div class="fm-pill-status">
+          <span class="fm-dot"></span>
+          Paper mode
+        </div>
+        <div class="fm-latency-label">Latency &lt; 4 ms</div>
       </div>
     </header>
 
-    <!-- Main area: left tools / chart / price rail -->
-    <div id="fm-main">
-      <!-- Left drawing toolbar (visual for now) -->
-      <aside id="fm-left-toolbar">
-        <button class="fm-tool-btn active" data-label="Select / Pan">▢</button>
-        <button class="fm-tool-btn" data-label="Crosshair">✚</button>
-        <button class="fm-tool-btn" data-label="Trendline">／</button>
-        <button class="fm-tool-btn" data-label="Horizontal line">━</button>
-        <button class="fm-tool-btn" data-label="Rectangle">▭</button>
-        <button class="fm-tool-btn" data-label="Fib tools">Φ</button>
-        <button class="fm-tool-btn" data-label="Text note">T</button>
-        <button class="fm-tool-btn" data-label="Risk/Reward">R:R</button>
-        <button class="fm-tool-btn" data-label="Eraser">⌫</button>
-      </aside>
+    <!-- MAIN CONTENT -->
+    <div class="fm-main">
+      <!-- Left toolbar -->
+      <aside class="fm-left-toolbar">
+        <button class="fm-tool-button" data-tool="cursor">
+          <span>◯</span>
+          <div class="fm-tool-label">Select / Cursor</div>
+        </button>
+        <button class="fm-tool-button" data-tool="trend">
+          <span>/</span>
+          <div class="fm-tool-label">Trend / Ray</div>
+        </button>
+        <button class="fm-tool-button" data-tool="hline">
+          <span>─</span>
+          <div class="fm-tool-label">Horizontal line</div>
+        </button>
+        <button class="fm-tool-button" data-tool="box">
+          <span>▢</span>
+          <div class="fm-tool-label">Zone / Region</div>
+        </button>
+        <button class="fm-tool-button" data-tool="text">
+          <span>T</span>
+          <div class="fm-tool-label">Text &amp; annotations</div>
+        </button>
+        <button class="fm-tool-button" data-tool="rr">
+          <span>R:R</span>
+          <div class="fm-tool-label">Risk / Reward</div>
+        </button>
+        <button class="fm-tool-button" data-tool="clear">
+          <span>⨯</span>
+          <div class="fm-tool-label">Clear drawings</div>
+        </button>
 
-      <!-- Chart region -->
-      <main id="fm-chart-region">
-        <canvas id="flo-gl-canvas"></canvas>
-      </main>
-
-      <!-- Right price rail (static for now) -->
-      <aside id="fm-price-rail">
-        <div class="fm-price-rail-header">PRICE</div>
-        <div class="fm-price-ticks">
-          <div class="fm-price-tick" style="top:10%;">
-            <span class="fm-price-tick-label">67,200</span>
+        <!-- TEXT & ANNOTATIONS DRAWER -->
+        <div id="fm-text-drawer" class="fm-left-drawer">
+          <div class="fm-left-drawer-header">TEXT &amp; ANNOTATIONS</div>
+          <div class="fm-left-drawer-item">
+            Plain label
+            <span class="fm-drawer-muted">T</span>
           </div>
-          <div class="fm-price-tick" style="top:30%;">
-            <span class="fm-price-tick-label">66,800</span>
+          <div class="fm-left-drawer-item">
+            Callout bubble
+            <span class="fm-drawer-muted">Shift+T</span>
           </div>
-          <div class="fm-price-tick" style="top:50%;">
-            <span class="fm-price-tick-label">66,400</span>
+          <div class="fm-left-drawer-item">
+            Arrow label
+            <span class="fm-drawer-muted">Alt+T</span>
           </div>
-          <div class="fm-price-tick" style="top:70%;">
-            <span class="fm-price-tick-label">66,000</span>
+          <div class="fm-left-drawer-separator"></div>
+          <div class="fm-left-drawer-item">
+            Note to journal (link trade)
           </div>
-          <div class="fm-price-tick" style="top:90%;">
-            <span class="fm-price-tick-label">65,600</span>
+          <div class="fm-left-drawer-item">
+            Emotion tag: 🧠 / 😓 / 😈
+          </div>
+          <div class="fm-left-drawer-separator"></div>
+          <div class="fm-left-drawer-item">
+            Save annotation preset…
           </div>
         </div>
-        <div class="fm-price-rail-footer">
-          <div class="fm-bid-row">
-            <span class="label">Bid</span>
-            <span>66,418.5</span>
-          </div>
-          <div class="fm-ask-row">
-            <span class="label">Ask</span>
-            <span>66,423.0</span>
-          </div>
-        </div>
       </aside>
+
+      <!-- Chart area + price rail -->
+      <div class="fm-chart-region">
+        <section class="fm-chart-area">
+          <!-- STACK: WebGL base + overlay canvas -->
+          <div class="fm-chart-stack">
+            <canvas id="flo-chart-canvas"></canvas>
+            <canvas id="flo-overlay-canvas"></canvas>
+          </div>
+        </section>
+
+        <aside class="fm-price-rail">
+          <div>
+            <div class="fm-price-rail-header">PRICE</div>
+            <div class="fm-price-rail-last">
+              <div class="fm-price-bubble">
+                <span id="fm-last-price">–</span>
+                <span class="fm-price-change" id="fm-last-change">0.00%</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="fm-price-rail-bids">
+              <span class="fm-label">Bid</span>
+              <span id="fm-bid">–</span>
+            </div>
+            <div class="fm-price-rail-bids">
+              <span class="fm-label">Ask</span>
+              <span id="fm-ask">–</span>
+            </div>
+          </div>
+        </aside>
+      </div>
     </div>
 
-    <!-- Bottom status bar -->
-    <footer id="fm-bottom-rail">
-      <span>UTC • Session: Crypto</span>
-      <span>Orderflow: Disconnected</span>
+    <!-- BOTTOM BAR -->
+    <footer class="fm-bottombar">
+      <div class="fm-bottombar-left">
+        <div class="fm-session-pill">UTC • Session: Crypto</div>
+        <div>Time axis – session</div>
+      </div>
+      <div class="fm-bottombar-right">
+        <div class="fm-status-disconnected">Orderflow: Disconnected</div>
+      </div>
     </footer>
   </div>
 
-  <!-- FloEngine entrypoint -->
   <script type="module" src="app/main.js"></script>
 </body>
 </html>
