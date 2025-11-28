@@ -1,0 +1,260 @@
+:root {
+  --fm-neon: #2ef27e;
+  --fm-neon-soft: rgba(46, 242, 126, 0.35);
+  --fm-neon-glow: rgba(46, 242, 126, 0.16);
+  --fm-bg: #000000;
+  --fm-panel: #050505;
+  --fm-border: #151515;
+  --fm-muted: #888888;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  background: var(--fm-bg);
+  color: #e5e5e5;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  overflow: hidden;
+}
+
+#fm-shell {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background: radial-gradient(circle at top left, #020617 0%, #000 45%);
+}
+
+/* Top bar */
+
+#fm-topbar {
+  height: 46px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  background: linear-gradient(to bottom, #050505, #020202);
+  border-bottom: 1px solid var(--fm-border);
+}
+
+#fm-logo-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#fm-logo-img {
+  height: 30px;
+  width: auto;
+}
+
+#fm-logo-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.fm-brand-name {
+  font-size: 15px;
+  letter-spacing: 0.08em;
+}
+
+.fm-tagline {
+  font-size: 10px;
+  color: var(--fm-muted);
+}
+
+#fm-top-center {
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#fm-symbol-pill {
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid #1f2937;
+  background: #020617;
+  color: var(--fm-neon);
+  font-size: 12px;
+}
+
+#fm-symbol-mode {
+  font-size: 11px;
+  color: var(--fm-muted);
+}
+
+#fm-top-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#fm-latency-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #16a34a;
+  box-shadow: 0 0 8px #16a34a;
+}
+
+.fm-latency-label {
+  font-size: 11px;
+  color: var(--fm-muted);
+}
+
+/* Main layout */
+
+#fm-main {
+  position: absolute;
+  top: 46px;
+  bottom: 26px;
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) 92px;
+  background: #000;
+}
+
+/* Left toolbar */
+
+#fm-left-toolbar {
+  background: #020617;
+  border-right: 1px solid var(--fm-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 10px;
+  gap: 8px;
+}
+
+.fm-tool-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid #111827;
+  background: #020617;
+  color: #d1d5db;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.15s;
+}
+
+.fm-tool-btn:hover {
+  border-color: var(--fm-neon-soft);
+  color: var(--fm-neon);
+  box-shadow: 0 0 8px var(--fm-neon-soft);
+}
+
+.fm-tool-btn.active {
+  background: #022c22;
+  border-color: var(--fm-neon);
+  color: var(--fm-neon);
+  box-shadow: 0 0 12px var(--fm-neon-soft);
+}
+
+/* Chart region */
+
+#fm-chart-region {
+  position: relative;
+  background: #000000;
+}
+
+#flo-gl-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Right price rail */
+
+#fm-price-rail {
+  background: linear-gradient(to right, #020617, #000000);
+  border-left: 1px solid var(--fm-border);
+  display: flex;
+  flex-direction: column;
+  padding: 6px 6px 8px 2px;
+  font-size: 10px;
+}
+
+.fm-price-rail-header {
+  text-align: center;
+  color: var(--fm-muted);
+  letter-spacing: 0.08em;
+  font-size: 9px;
+}
+
+.fm-price-ticks {
+  position: relative;
+  flex: 1;
+  margin-top: 6px;
+  margin-bottom: 4px;
+}
+
+.fm-price-tick {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #0b1120;
+}
+
+.fm-price-tick-label {
+  position: absolute;
+  right: 0;
+  top: -7px;
+  padding-left: 4px;
+  background: rgba(0, 0, 0, 0.9);
+  color: #9ca3af;
+}
+
+.fm-price-rail-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fm-bid-row,
+.fm-ask-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 4px;
+  border-radius: 4px;
+  background: #020617;
+}
+
+.fm-bid-row .label {
+  color: #22c55e;
+}
+
+.fm-ask-row .label {
+  color: #f97373;
+}
+
+/* Bottom bar */
+
+#fm-bottom-rail {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 26px;
+  background: #020617;
+  border-top: 1px solid var(--fm-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  font-size: 11px;
+  color: var(--fm-muted);
+}

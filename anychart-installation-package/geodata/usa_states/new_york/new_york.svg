@@ -1,0 +1,687 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="700" height="700">
+  <g id="new_york">
+    <path d="M 463.5106 231.1359 435.2815 233.7163 416.8221 235.4586 407.3203 231.3386 382.9006 220.6584 346.2711 204.2333 349.7434 201.6698 354.5749 194.2715 377.6108 177.5269 389.4289 170.6222 395.1557 165.8701 416.5155 157.6088 424.8141 152.8987 430.5222 152.9025 437.7232 150.0274 446.6028 151.8847 447.1269 155.588 454.0675 155.6225 464.3489 224.8191 463.5106 231.1359 Z" id="US.NY.089" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.089</id>
+        <name>St. Lawrence County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>105782</population>
+        <fips>089</fips>
+        <incits>36089</incits>
+      </desc>
+    </path>
+    <path d="M 508.4411 151.8047 568.9916 150.4708 569.4024 158.1452 565.6083 165.1438 569.6713 168.7204 567.0062 174.2789 564.8596 185.3025 569.3893 191.529 558.3098 192.3398 555.5396 196.6232 541.0991 200.6395 518.8574 201.895 516.8009 188.9316 513.8612 177.1697 512.0708 177.2887 508.4411 151.8047 Z" id="US.NY.019" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.019</id>
+        <name>Clinton County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>74562</population>
+        <fips>019</fips>
+        <incits>36019</incits>
+      </desc>
+    </path>
+    <path d="M 518.8574 201.895 498.3514 203.8799 502.593 227.741 485.9235 229.2509 463.5106 231.1359 464.3489 224.8191 454.0675 155.6225 447.1269 155.588 446.6028 151.8847 450.3421 151.4574 481.2058 152.1463 508.4411 151.8047 512.0708 177.2887 513.8612 177.1697 516.8009 188.9316 518.8574 201.895 Z" id="US.NY.033" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.033</id>
+        <name>Franklin County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>42970</population>
+        <fips>033</fips>
+        <incits>36033</incits>
+      </desc>
+    </path>
+    <path d="M 569.3893 191.529 572.2141 195.6446 573.1588 202.0153 569.8366 206.9752 571.832 215.6513 570.7196 218.3363 564.7724 223.1877 560.6192 235.9359 563.0052 237.5341 563.1987 245.853 566.2462 251.0535 565.7923 256.8735 560.5785 257.2901 505.8215 262.526 506.7013 257.9396 497.2845 254.9994 491.9578 256.6583 481.0605 246.5353 488.2129 242.591 485.9235 229.2509 502.593 227.741 498.3514 203.8799 518.8574 201.895 541.0991 200.6395 555.5396 196.6232 558.3098 192.3398 569.3893 191.529 Z" id="US.NY.031" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.031</id>
+        <name>Essex County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>36848</population>
+        <fips>031</fips>
+        <incits>36031</incits>
+      </desc>
+    </path>
+    <path d="M 346.2711 204.2333 382.9006 220.6584 374.0728 230.806 379.5022 233.355 377.9712 239.0728 374.3372 242.7681 368.9596 242.4524 355.2893 250.6445 347.9976 250.1851 347.1158 258.3405 352.7583 258.6496 353.8384 267.4485 331.6691 265.8439 331.942 269.2839 316.147 268.2143 313.6014 257.2501 308.8196 253.7294 312.3523 250.7162 315.9916 251.8733 322.6257 248.954 322.0053 243.9246 307.6296 238.7408 306.9702 234.6582 302.0061 233.6439 301.4162 231.0333 306.2233 222.3053 312.1662 221.896 319.3534 218.7163 319.5686 215.0729 325.2745 213.4119 333.8007 209.1656 336.5272 209.5815 346.2711 204.2333 Z" id="US.NY.045" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.045</id>
+        <name>Jefferson County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>99118</population>
+        <fips>045</fips>
+        <incits>36045</incits>
+      </desc>
+    </path>
+    <path d="M 382.9006 220.6584 407.3203 231.3386 412.6295 273.9661 375.1688 291.2632 355.4638 286.7834 353.8384 267.4485 352.7583 258.6496 347.1158 258.3405 347.9976 250.1851 355.2893 250.6445 368.9596 242.4524 374.3372 242.7681 377.9712 239.0728 379.5022 233.355 374.0728 230.806 382.9006 220.6584 Z" id="US.NY.049" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.049</id>
+        <name>Lewis County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>26451</population>
+        <fips>049</fips>
+        <incits>36049</incits>
+      </desc>
+    </path>
+    <path d="M 485.9235 229.2509 488.2129 242.591 481.0605 246.5353 491.9578 256.6583 497.2845 254.9994 506.7013 257.9396 505.8215 262.526 491.8739 263.925 496.6987 295.5305 498.4644 305.9326 491.0253 306.447 491.3185 308.8152 482.3393 309.4097 481.9851 307.0249 463.5548 308.2212 447.8076 303.0864 434.0833 298.3361 442.2326 285.3415 435.2815 233.7163 463.5106 231.1359 485.9235 229.2509 Z" id="US.NY.041" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.041</id>
+        <name>Hamilton County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>5257</population>
+        <fips>041</fips>
+        <incits>36041</incits>
+      </desc>
+    </path>
+    <path d="M 407.3203 231.3386 416.8221 235.4586 435.2815 233.7163 442.2326 285.3415 434.0833 298.3361 447.8076 303.0864 449.2628 312.5107 442.8007 318.3112 443.6185 324.2094 445.3762 328.5561 443.3223 340.5087 433.1002 337.4083 430.63 343.8973 413.4401 336.5156 410.0136 340.8157 403.6038 339.0278 402.9889 323.7639 416.257 308.2904 411.463 307.0136 409.8948 301.4474 415.6008 299.1432 412.6295 273.9661 407.3203 231.3386 Z" id="US.NY.043" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.043</id>
+        <name>Herkimer County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>63031</population>
+        <fips>043</fips>
+        <incits>36043</incits>
+      </desc>
+    </path>
+    <path d="M 565.7923 256.8735 568.3307 260.0991 561.4891 272.2672 561.4248 276.7301 564.1247 278.1396 567.6228 273.0958 572.6239 273.1578 577.5133 281.8813 576.6575 305.4662 575.0823 333.3929 543.123 333.6019 546.5166 327.7322 548.62 319.5097 547.0794 316.0637 548.0947 309.921 546.7071 301.3189 543.4003 283.0916 545.7669 278.1861 555.705 270.422 560.5785 257.2901 565.7923 256.8735 Z" id="US.NY.115" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.115</id>
+        <name>Washington County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>57973</population>
+        <fips>115</fips>
+        <incits>36115</incits>
+      </desc>
+    </path>
+    <path d="M 560.5785 257.2901 555.705 270.422 545.7669 278.1861 543.4003 283.0916 546.7071 301.3189 542.4772 301.4911 534.7153 304.4464 531.2128 308.6962 525.3946 305.9523 526.3853 301.4824 523.3738 299.3724 521.1924 293.1894 496.6987 295.5305 491.8739 263.925 505.8215 262.526 560.5785 257.2901 Z" id="US.NY.113" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.113</id>
+        <name>Warren County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>61705</population>
+        <fips>113</fips>
+        <incits>36113</incits>
+      </desc>
+    </path>
+    <path d="M 353.8384 267.4485 355.4638 286.7834 350.2923 285.6157 343.9097 299.6462 346.0177 300.1593 344.1319 314.6376 334.474 312.1799 327.0042 310.7625 323.5977 307.7313 315.0426 305.7456 314.0278 310.2695 306.6752 307.9847 291.4832 308.274 291.313 305.697 280.3524 305.9688 279.2874 291.3157 297.5524 282.1133 307.5988 283.0237 313.0204 281.5737 315.884 277.5279 316.147 268.2143 331.942 269.2839 331.6691 265.8439 353.8384 267.4485 Z" id="US.NY.075" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.075</id>
+        <name>Oswego County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>118918</population>
+        <fips>075</fips>
+        <incits>36075</incits>
+      </desc>
+    </path>
+    <path d="M 412.6295 273.9661 415.6008 299.1432 409.8948 301.4474 411.463 307.0136 416.257 308.2904 402.9889 323.7639 403.6038 339.0278 400.4326 339.776 383.6931 340.5014 383.0732 334.3276 374.221 334.4443 373.4633 325.0837 369.5404 325.2757 364.616 318.3457 358.3455 314.1923 344.1319 314.6376 346.0177 300.1593 343.9097 299.6462 350.2923 285.6157 355.4638 286.7834 375.1688 291.2632 412.6295 273.9661 Z" id="US.NY.065" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.065</id>
+        <name>Oneida County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>212414</population>
+        <fips>065</fips>
+        <incits>36065</incits>
+      </desc>
+    </path>
+    <path d="M 279.2874 291.3157 280.3524 305.9688 291.313 305.697 291.4832 308.274 292.1424 319.117 289.709 319.8056 290.3579 327.9675 292.9189 327.8479 294.0037 342.0525 302.297 341.7289 309.5836 348.6479 310.3879 361.7148 293.2543 361.3986 274.9077 361.7264 273.2469 357.5831 268.9868 352.4849 268.5569 346.5746 270.2203 343.8528 268.6323 337.0692 268.696 331.0361 270.7229 326.2763 271.7386 321.2585 269.9559 297.9945 272.0922 297.9282 279.2874 291.3157 Z" id="US.NY.011" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.011</id>
+        <name>Cayuga County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>76501</population>
+        <fips>011</fips>
+        <incits>36011</incits>
+      </desc>
+    </path>
+    <path d="M 546.7071 301.3189 548.0947 309.921 547.0794 316.0637 548.62 319.5097 546.5166 327.7322 543.123 333.6019 538.7992 337.9725 540.9816 344.4251 539.4685 347.5842 534.0795 344.434 527.7347 347.9736 520.0803 341.5848 519.3015 336.2579 514.9301 337.4613 510.2932 334.2669 502.6282 332.3272 502.241 329.9169 498.4644 305.9326 496.6987 295.5305 521.1924 293.1894 523.3738 299.3724 526.3853 301.4824 525.3946 305.9523 531.2128 308.6962 534.7153 304.4464 542.4772 301.4911 546.7071 301.3189 Z" id="US.NY.091" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.091</id>
+        <name>Saratoga County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>192579</population>
+        <fips>091</fips>
+        <incits>36091</incits>
+      </desc>
+    </path>
+    <path d="M 115.7238 295.5568 124.1519 295.0904 136.2405 295.7483 147.6644 295.168 157.369 296.0856 157.152 316.6395 115.7204 317.0255 116.1707 309.2736 115.7238 295.5568 Z" id="US.NY.073" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.073</id>
+        <name>Orleans County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>39367</population>
+        <fips>073</fips>
+        <incits>36073</incits>
+      </desc>
+    </path>
+    <path d="M 115.7238 295.5568 116.1707 309.2736 115.7204 317.0255 115.8141 320.5969 111.779 319.7386 104.9917 321.9331 95.762 320.5793 83.7627 323.8357 82.6389 326.685 72.8516 322.4023 66.3141 322.461 61.8343 321.5175 64.6749 315.695 62.1881 305.1826 83.1075 300.3068 100.7799 296.7612 115.7238 295.5568 Z" id="US.NY.063" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.063</id>
+        <name>Niagara County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>199404</population>
+        <fips>063</fips>
+        <incits>36063</incits>
+      </desc>
+    </path>
+    <path d="M 157.369 296.0856 178.421 298.5542 187.5505 303.6757 198.1315 307.6501 212.2427 303.8277 212.5481 325.3396 202.4467 325.3482 202.7034 333.4361 194.0313 333.3653 180.5805 333.268 180.7397 329.4365 164.891 329.4897 165.3964 325.1277 161.2442 324.9076 165.2359 316.5882 157.152 316.6395 157.369 296.0856 Z" id="US.NY.055" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.055</id>
+        <name>Monroe County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>581961</population>
+        <fips>055</fips>
+        <incits>36055</incits>
+      </desc>
+    </path>
+    <path d="M 269.9559 297.9945 271.7386 321.2585 270.7229 326.2763 248.6015 327.2423 233.5965 327.3039 233.5247 324.8772 212.5481 325.3396 212.2427 303.8277 222.024 303.8634 235.5017 302.927 242.403 304.4071 249.6326 304.4537 253.87 302.5844 263.5665 301.0079 269.9559 297.9945 Z" id="US.NY.117" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.117</id>
+        <name>Wayne County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>87954</population>
+        <fips>117</fips>
+        <incits>36117</incits>
+      </desc>
+    </path>
+    <path d="M 447.8076 303.0864 463.5548 308.2212 481.9851 307.0249 482.3393 309.4097 491.3185 308.8152 491.0253 306.447 498.4644 305.9326 502.241 329.9169 462.8839 329.6974 443.6185 324.2094 442.8007 318.3112 449.2628 312.5107 447.8076 303.0864 Z" id="US.NY.035" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.035</id>
+        <name>Fulton County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>52863</population>
+        <fips>035</fips>
+        <incits>36035</incits>
+      </desc>
+    </path>
+    <path d="M 334.474 312.1799 341.2111 320.788 343.0848 346.904 309.5836 348.6479 302.297 341.7289 294.0037 342.0525 292.9189 327.8479 290.3579 327.9675 289.709 319.8056 292.1424 319.117 291.4832 308.274 306.6752 307.9847 314.0278 310.2695 315.0426 305.7456 323.5977 307.7313 327.0042 310.7625 334.474 312.1799 Z" id="US.NY.067" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.067</id>
+        <name>Onondaga County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>388555</population>
+        <fips>067</fips>
+        <incits>36067</incits>
+      </desc>
+    </path>
+    <path d="M 334.474 312.1799 344.1319 314.6376 358.3455 314.1923 364.616 318.3457 369.5404 325.2757 373.4633 325.0837 374.221 334.4443 383.0732 334.3276 383.6931 340.5014 400.4326 339.776 399.4686 348.1329 396.2199 351.0482 384.4452 350.934 343.6376 352.8434 343.0848 346.904 341.2111 320.788 334.474 312.1799 Z" id="US.NY.053" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.053</id>
+        <name>Madison County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>67006</population>
+        <fips>053</fips>
+        <incits>36053</incits>
+      </desc>
+    </path>
+    <path d="M 164.891 329.4897 160.8473 336.737 160.8966 340.5701 150.3525 339.8864 115.8182 340.135 115.8141 320.5969 115.7204 317.0255 157.152 316.6395 165.2359 316.5882 161.2442 324.9076 165.3964 325.1277 164.891 329.4897 Z" id="US.NY.037" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.037</id>
+        <name>Genesee County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>57167</population>
+        <fips>037</fips>
+        <incits>36037</incits>
+      </desc>
+    </path>
+    <path d="M 115.8141 320.5969 115.8182 340.135 113.8842 340.111 113.7172 347.8158 115.9215 347.8334 115.8587 369.4484 93.707 373.9359 87.9746 376.6009 78.7072 378.1312 72.2198 375.077 68.6955 369.7676 63.0458 369.3014 56.3253 366.4837 58.5697 362.6201 62.7818 359.8415 64.1003 355.9127 75.666 351.6564 81.3913 347.524 79.7302 341.3875 74.4092 332.3129 67.4006 329.7114 66.3141 322.461 72.8516 322.4023 82.6389 326.685 83.7627 323.8357 95.762 320.5793 104.9917 321.9331 111.779 319.7386 115.8141 320.5969 Z" id="US.NY.029" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.029</id>
+        <name>Erie County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>780942</population>
+        <fips>029</fips>
+        <incits>36029</incits>
+      </desc>
+    </path>
+    <path d="M 502.241 329.9169 502.6282 332.3272 503.3202 337.5393 488.1069 345.0408 487.5328 346.4054 485.2531 347.5375 470.6114 348.4955 461.1193 344.9712 453.4989 343.4889 443.3223 340.5087 445.3762 328.5561 443.6185 324.2094 462.8839 329.6974 502.241 329.9169 Z" id="US.NY.057" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.057</id>
+        <name>Montgomery County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>47160</population>
+        <fips>057</fips>
+        <incits>36057</incits>
+      </desc>
+    </path>
+    <path d="M 248.6015 327.2423 248.6425 339.6773 247.1303 341.038 247.8395 349.2709 217.7034 349.532 212.916 357.7968 212.9691 365.8933 202.0405 365.8137 202.3178 357.5832 192.4124 357.434 191.275 349.3635 193.3502 349.3817 193.3697 341.3252 196.5388 341.3204 194.0313 333.3653 202.7034 333.4361 202.4467 325.3482 212.5481 325.3396 233.5247 324.8772 233.5965 327.3039 248.6015 327.2423 Z" id="US.NY.069" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.069</id>
+        <name>Ontario County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>95256</population>
+        <fips>069</fips>
+        <incits>36069</incits>
+      </desc>
+    </path>
+    <path d="M 270.7229 326.2763 268.696 331.0361 268.6323 337.0692 270.2203 343.8528 268.5569 346.5746 268.9868 352.4849 273.2469 357.5831 274.9077 361.7264 282.0357 368.2345 272.2435 368.5181 254.6391 368.9754 254.6778 358.999 247.8395 349.2709 247.1303 341.038 248.6425 339.6773 248.6015 327.2423 270.7229 326.2763 Z" id="US.NY.099" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.099</id>
+        <name>Seneca County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>31682</population>
+        <fips>099</fips>
+        <incits>36099</incits>
+      </desc>
+    </path>
+    <path d="M 194.0313 333.3653 196.5388 341.3204 193.3697 341.3252 193.3502 349.3817 191.275 349.3635 192.4124 357.434 202.3178 357.5832 202.0405 365.8137 187.0053 365.5435 186.8819 369.5479 181.6343 369.548 181.4267 375.198 171.0499 374.9007 171.0089 371.0784 153.4864 370.7959 152.6045 365.6651 157.762 362.4907 160.7766 357.7954 160.8966 340.5701 160.8473 336.737 164.891 329.4897 180.7397 329.4365 180.5805 333.268 194.0313 333.3653 Z" id="US.NY.051" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.051</id>
+        <name>Livingston County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>60494</population>
+        <fips>051</fips>
+        <incits>36051</incits>
+      </desc>
+    </path>
+    <path d="M 575.0823 333.3929 574.6948 343.148 573.609 345.9345 575.9085 350.8881 568.1596 371.7659 530.0039 375.8161 532.2522 369.6233 531.991 362.8837 537.1943 354.9552 539.4685 347.5842 540.9816 344.4251 538.7992 337.9725 543.123 333.6019 575.0823 333.3929 Z" id="US.NY.083" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.083</id>
+        <name>Rensselaer County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>139002</population>
+        <fips>083</fips>
+        <incits>36083</incits>
+      </desc>
+    </path>
+    <path d="M 502.6282 332.3272 510.2932 334.2669 514.9301 337.4613 519.3015 336.2579 520.0803 341.5848 527.7347 347.9736 494.9135 352.3005 486.7708 353.6905 487.5328 346.4054 488.1069 345.0408 503.3202 337.5393 502.6282 332.3272 Z" id="US.NY.093" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.093</id>
+        <name>Schenectady County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>128631</population>
+        <fips>093</fips>
+        <incits>36093</incits>
+      </desc>
+    </path>
+    <path d="M 443.3223 340.5087 453.4989 343.4889 451.7987 350.466 455.0604 361.4333 447.8992 371.0759 442.6428 372.2501 436.1708 371.5368 420.6237 378.9296 414.1118 379.6739 404.9349 385.1813 398.8501 384.7146 395.05 388.4732 385.6252 389.1086 389.1978 380.5773 386.6724 374.2003 389.8788 368.2364 393.1019 366.6622 393.097 358.3611 396.2199 351.0482 399.4686 348.1329 400.4326 339.776 403.6038 339.0278 410.0136 340.8157 413.4401 336.5156 430.63 343.8973 433.1002 337.4083 443.3223 340.5087 Z" id="US.NY.077" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.077</id>
+        <name>Otsego County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>59083</population>
+        <fips>077</fips>
+        <incits>36077</incits>
+      </desc>
+    </path>
+    <path d="M 160.8966 340.5701 160.7766 357.7954 157.762 362.4907 152.6045 365.6651 153.4864 370.7959 129.5839 370.7927 115.7955 370.9555 115.8587 369.4484 115.9215 347.8334 113.7172 347.8158 113.8842 340.111 115.8182 340.135 150.3525 339.8864 160.8966 340.5701 Z" id="US.NY.121" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.121</id>
+        <name>Wyoming County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>39880</population>
+        <fips>121</fips>
+        <incits>36121</incits>
+      </desc>
+    </path>
+    <path d="M 453.4989 343.4889 461.1193 344.9712 470.6114 348.4955 485.2531 347.5375 487.5328 346.4054 486.7708 353.6905 494.9135 352.3005 495.8366 357.8384 490.1599 365.9534 490.646 373.1483 488.3629 380.7736 486.3859 384.743 480.2411 385.4206 477.3241 383.8117 471.6206 385.4803 456.2438 379.3984 447.8992 371.0759 455.0604 361.4333 451.7987 350.466 453.4989 343.4889 Z" id="US.NY.095" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.095</id>
+        <name>Schoharie County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>30514</population>
+        <fips>095</fips>
+        <incits>36095</incits>
+      </desc>
+    </path>
+    <path d="M 527.7347 347.9736 534.0795 344.434 539.4685 347.5842 537.1943 354.9552 531.991 362.8837 532.2522 369.6233 530.0039 375.8161 488.3629 380.7736 490.646 373.1483 490.1599 365.9534 495.8366 357.8384 494.9135 352.3005 527.7347 347.9736 Z" id="US.NY.001" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.001</id>
+        <name>Albany County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>245060</population>
+        <fips>001</fips>
+        <incits>36001</incits>
+      </desc>
+    </path>
+    <path d="M 343.0848 346.904 343.6376 352.8434 345.9216 380.1103 322.3695 380.5851 311.4696 380.8301 310.3879 361.7148 309.5836 348.6479 343.0848 346.904 Z" id="US.NY.023" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.023</id>
+        <name>Cortland County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>47115</population>
+        <fips>023</fips>
+        <incits>36023</incits>
+      </desc>
+    </path>
+    <path d="M 247.8395 349.2709 254.6778 358.999 254.6391 368.9754 255.1516 375.9202 248.588 376.2624 246.3357 373.9881 235.9144 374.087 232.1714 372.6448 232.6764 365.8489 212.9691 365.8933 212.916 357.7968 217.7034 349.532 247.8395 349.2709 Z" id="US.NY.123" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.123</id>
+        <name>Yates County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>24103</population>
+        <fips>123</fips>
+        <incits>36123</incits>
+      </desc>
+    </path>
+    <path d="M 396.2199 351.0482 393.097 358.3611 393.1019 366.6622 389.8788 368.2364 386.6724 374.2003 389.1978 380.5773 385.6252 389.1086 385.3519 399.6371 366.0005 399.5845 365.8119 394.8904 349.8716 394.8613 347.7116 393.9141 345.9216 380.1103 343.6376 352.8434 384.4452 350.934 396.2199 351.0482 Z" id="US.NY.017" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.017</id>
+        <name>Chenango County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>50191</population>
+        <fips>017</fips>
+        <incits>36017</incits>
+      </desc>
+    </path>
+    <path d="M 310.3879 361.7148 311.4696 380.8301 311.7598 390.6422 302.8396 388.7303 297.1393 388.7233 297.0602 393.6248 286.2513 391.9631 279.0832 391.8659 272.7009 391.7313 273.1929 383.8554 272.2435 368.5181 282.0357 368.2345 274.9077 361.7264 293.2543 361.3986 310.3879 361.7148 Z" id="US.NY.109" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.109</id>
+        <name>Tompkins County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>82507</population>
+        <fips>109</fips>
+        <incits>36109</incits>
+      </desc>
+    </path>
+    <path d="M 202.0405 365.8137 212.9691 365.8933 232.6764 365.8489 232.1714 372.6448 235.9144 374.087 236.5821 392.7948 248.4952 392.2516 248.437 416.7824 179.0404 417.0029 180.7104 381.135 181.4267 375.198 181.6343 369.548 186.8819 369.5479 187.0053 365.5435 202.0405 365.8137 Z" id="US.NY.101" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.101</id>
+        <name>Steuben County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>95198</population>
+        <fips>101</fips>
+        <incits>36101</incits>
+      </desc>
+    </path>
+    <path d="M 63.0458 369.3014 63.0026 416.9607 1.0511 416.9777 1 393.0157 11.3171 388.9655 30.4518 378.9885 37.2769 373.6314 46.931 369.8408 55.2636 367.9016 56.3253 366.4837 63.0458 369.3014 Z" id="US.NY.013" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.013</id>
+        <name>Chautauqua County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>131416</population>
+        <fips>013</fips>
+        <incits>36013</incits>
+      </desc>
+    </path>
+    <path d="M 272.2435 368.5181 273.1929 383.8554 272.7009 391.7313 279.0832 391.8659 276.5384 395.8266 269.0556 394.9454 268.9459 390.9042 258.8336 390.9297 248.4952 392.2516 236.5821 392.7948 235.9144 374.087 246.3357 373.9881 248.588 376.2624 255.1516 375.9202 254.6391 368.9754 272.2435 368.5181 Z" id="US.NY.097" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.097</id>
+        <name>Schuyler County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>18548</population>
+        <fips>097</fips>
+        <incits>36097</incits>
+      </desc>
+    </path>
+    <path d="M 115.8587 369.4484 115.7955 370.9555 129.5839 370.7927 129.6464 416.9469 79.5062 417.1111 63.0026 416.9607 63.0458 369.3014 68.6955 369.7676 72.2198 375.077 78.7072 378.1312 87.9746 376.6009 93.707 373.9359 115.8587 369.4484 Z" id="US.NY.009" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.009</id>
+        <name>Cattaraugus County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>79444</population>
+        <fips>009</fips>
+        <incits>36009</incits>
+      </desc>
+    </path>
+    <path d="M 153.4864 370.7959 171.0089 371.0784 171.0499 374.9007 181.4267 375.198 180.7104 381.135 179.0404 417.0029 129.6464 416.9469 129.5839 370.7927 153.4864 370.7959 Z" id="US.NY.003" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.003</id>
+        <name>Allegany County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>48444</population>
+        <fips>003</fips>
+        <incits>36003</incits>
+      </desc>
+    </path>
+    <path d="M 447.8992 371.0759 456.2438 379.3984 471.6206 385.4803 472.9754 386.0061 463.32 399.0715 470.8944 401.9207 441.7835 415.4461 409.4186 430.0888 406.7474 428.1888 402.5795 429.5086 399.3152 427.179 397.6808 422.3003 390.5588 416.9442 385.056 413.2138 385.3519 399.6371 385.6252 389.1086 395.05 388.4732 398.8501 384.7146 404.9349 385.1813 414.1118 379.6739 420.6237 378.9296 436.1708 371.5368 442.6428 372.2501 447.8992 371.0759 Z" id="US.NY.025" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.025</id>
+        <name>Delaware County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>46346</population>
+        <fips>025</fips>
+        <incits>36025</incits>
+      </desc>
+    </path>
+    <path d="M 568.1596 371.7659 554.3895 409.2624 555.3861 412.4995 552.7144 418.8437 536.4451 416.4095 519.0257 409.8506 517.093 409.9242 518.77 405.6312 523.674 399.9571 524.3325 396.5121 528.2983 394.4496 530.2785 390.0817 529.1238 383.1138 530.0039 375.8161 568.1596 371.7659 Z" id="US.NY.021" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.021</id>
+        <name>Columbia County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>58105</population>
+        <fips>021</fips>
+        <incits>36021</incits>
+      </desc>
+    </path>
+    <path d="M 530.0039 375.8161 529.1238 383.1138 530.2785 390.0817 528.2983 394.4496 524.3325 396.5121 523.674 399.9571 518.77 405.6312 510.6489 401.2334 507.1144 401.818 504.2471 408.3481 483.6835 406.7761 470.8944 401.9207 463.32 399.0715 472.9754 386.0061 471.6206 385.4803 477.3241 383.8117 480.2411 385.4206 486.3859 384.743 488.3629 380.7736 530.0039 375.8161 Z" id="US.NY.039" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.039</id>
+        <name>Greene County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>43740</population>
+        <fips>039</fips>
+        <incits>36039</incits>
+      </desc>
+    </path>
+    <path d="M 345.9216 380.1103 347.7116 393.9141 349.8716 394.8613 365.8119 394.8904 366.0005 399.5845 385.3519 399.6371 385.056 413.2138 390.5588 416.9442 324.5234 416.9962 323.6044 400.4708 326.7128 396.5963 322.3695 380.5851 345.9216 380.1103 Z" id="US.NY.007" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.007</id>
+        <name>Broome County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>183153</population>
+        <fips>007</fips>
+        <incits>36007</incits>
+      </desc>
+    </path>
+    <path d="M 322.3695 380.5851 326.7128 396.5963 323.6044 400.4708 324.5234 416.9962 284.502 416.8814 285.9735 412.3178 284.6198 404.5963 286.4143 403.1438 286.2513 391.9631 297.0602 393.6248 297.1393 388.7233 302.8396 388.7303 311.7598 390.6422 311.4696 380.8301 322.3695 380.5851 Z" id="US.NY.107" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.107</id>
+        <name>Tioga County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>50501</population>
+        <fips>107</fips>
+        <incits>36107</incits>
+      </desc>
+    </path>
+    <path d="M 279.0832 391.8659 286.2513 391.9631 286.4143 403.1438 284.6198 404.5963 285.9735 412.3178 284.502 416.8814 248.437 416.7824 248.4952 392.2516 258.8336 390.9297 268.9459 390.9042 269.0556 394.9454 276.5384 395.8266 279.0832 391.8659 Z" id="US.NY.015" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.015</id>
+        <name>Chemung County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>82840</population>
+        <fips>015</fips>
+        <incits>36015</incits>
+      </desc>
+    </path>
+    <path d="M 518.77 405.6312 517.093 409.9242 516.7659 415.2589 514.2429 425.699 516.0875 438.5092 514.9975 453.1774 506.1155 454.0063 504.8517 451.7744 499.6814 453.8351 488.602 451.815 487.4804 449.3914 478.3517 453.0879 475.9052 448.3188 459.9773 439.4368 470.7199 427.9035 441.7835 415.4461 470.8944 401.9207 483.6835 406.7761 504.2471 408.3481 507.1144 401.818 510.6489 401.2334 518.77 405.6312 Z" id="US.NY.111" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.111</id>
+        <name>Ulster County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>158042</population>
+        <fips>111</fips>
+        <incits>36111</incits>
+      </desc>
+    </path>
+    <path d="M 517.093 409.9242 519.0257 409.8506 536.4451 416.4095 552.7144 418.8437 555.3861 412.4995 556.0289 416.887 552.4493 458.733 516.7259 462.1765 512.504 466.5455 511.1177 459.4123 514.9975 453.1774 516.0875 438.5092 514.2429 425.699 516.7659 415.2589 517.093 409.9242 Z" id="US.NY.027" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.027</id>
+        <name>Dutchess County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>234385</population>
+        <fips>027</fips>
+        <incits>36027</incits>
+      </desc>
+    </path>
+    <path d="M 441.7835 415.4461 470.7199 427.9035 459.9773 439.4368 475.9052 448.3188 478.3517 453.0879 473.9734 454.9655 468.7926 460.7555 444.4854 461.6897 444.0829 467.7765 432.2269 466.6027 430.1186 463.298 424.0009 462.914 418.0958 450.8759 417.6493 438.7927 413.1179 436.8756 414.786 433.564 409.4186 430.0888 441.7835 415.4461 Z" id="US.NY.105" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.105</id>
+        <name>Sullivan County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>63103</population>
+        <fips>105</fips>
+        <incits>36105</incits>
+      </desc>
+    </path>
+    <path d="M 514.9975 453.1774 511.1177 459.4123 512.504 466.5455 515.5093 470.5796 512.513 476.652 490.1176 492.74 449.3739 473.7557 444.0829 467.7765 444.4854 461.6897 468.7926 460.7555 473.9734 454.9655 478.3517 453.0879 487.4804 449.3914 488.602 451.815 499.6814 453.8351 504.8517 451.7744 506.1155 454.0063 514.9975 453.1774 Z" id="US.NY.071" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.071</id>
+        <name>Orange County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>285721</population>
+        <fips>071</fips>
+        <incits>36071</incits>
+      </desc>
+    </path>
+    <path d="M 552.4493 458.733 551.152 472.9636 512.4068 476.9174 512.513 476.652 515.5093 470.5796 512.504 466.5455 516.7259 462.1765 552.4493 458.733 Z" id="US.NY.079" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.079</id>
+        <name>Putnam County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>89876</population>
+        <fips>079</fips>
+        <incits>36079</incits>
+      </desc>
+    </path>
+    <path d="M 551.152 472.9636 550.6005 479.2421 556.64 486.5567 534.9545 496.4731 541.4233 504.3485 540.9543 508.1799 532.3882 513.1175 530.0195 515.9101 518.1302 512.677 520.2474 505.6316 520.8136 493.9867 513.4745 483.4621 515.5129 480.2003 512.4068 476.9174 551.152 472.9636 Z" id="US.NY.119" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.119</id>
+        <name>Westchester County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>658858</population>
+        <fips>119</fips>
+        <incits>36119</incits>
+      </desc>
+    </path>
+    <path d="M 512.4068 476.9174 515.5129 480.2003 513.4745 483.4621 520.8136 493.9867 520.2474 505.6316 519.4774 505.6227 490.1176 492.74 512.513 476.652 512.4068 476.9174 Z" id="US.NY.087" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.087</id>
+        <name>Rockland County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>220538</population>
+        <fips>087</fips>
+        <incits>36087</incits>
+      </desc>
+    </path>
+    <path d="M 555.4071 512.1549 556.405 510.1268 563.4213 512.4418 573.2448 512.0647 579.0651 513.7792 586.1699 511.6752 586.8963 508.3764 595.4871 508.7297 619.3433 508.4528 626.8438 506.2882 636.0479 505.597 645.6065 500.7634 648.4438 497.7633 652.7126 496.8615 656.3329 493.5584 662.0827 491.5905 661.4979 498.2122 664.7899 501.6613 670.9799 502.5007 673.4279 500.6771 677.5453 505.4016 683.46 504.5255 694.976 498.2587 699 500.7575 677.7152 507.8537 652.8144 517.1826 637.0996 521.9086 619.87 526.4803 594.4905 534.9058 580.9096 538.046 572.2416 538.9422 571.1036 537.6114 561.8427 539.9079 561.8734 534.4785 558.8737 518.772 555.4071 512.1549 Z" id="US.NY.103" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.103</id>
+        <name>Suffolk County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>1200755</population>
+        <fips>103</fips>
+        <incits>36103</incits>
+      </desc>
+    </path>
+    <path d="M 518.1302 512.677 530.0195 515.9101 527.1853 519.9727 529.8107 523.0118 518.6079 523.4192 516.7585 515.8182 518.1302 512.677 Z" id="US.NY.005" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.005</id>
+        <name>Bronx County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>398003</population>
+        <fips>005</fips>
+        <incits>36005</incits>
+      </desc>
+    </path>
+    <path d="M 518.6079 523.4192 514.1889 528.7314 509.05 533.804 509.646 526.9215 516.7585 515.8182 518.6079 523.4192 Z" id="US.NY.061" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.061</id>
+        <name>New York County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>835610</population>
+        <fips>061</fips>
+        <incits>061</incits>
+      </desc>
+    </path>
+    <path d="M 531.3735 523.0034 536.2023 516.8783 539.5738 518.0374 543.2727 514.3918 555.4071 512.1549 558.8737 518.772 561.8734 534.4785 561.8427 539.9079 549.5907 542.221 532.6053 541.9861 531.5197 538.4942 535.2176 536.2495 535.0887 531.0629 537.3374 527.3808 531.3735 523.0034 Z" id="US.NY.059" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.059</id>
+        <name>Nassau County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>1058285</population>
+        <fips>059</fips>
+        <incits>36059</incits>
+      </desc>
+    </path>
+    <path d="M 529.8107 523.0118 531.3735 523.0034 537.3374 527.3808 535.0887 531.0629 535.2176 536.2495 531.5197 538.4942 532.6053 541.9861 525.5187 542.7963 516.6607 545.6303 516.2386 543.7473 524.1618 541.8099 525.6219 538.2084 522.4362 532.3772 514.1889 528.7314 518.6079 523.4192 529.8107 523.0118 Z" id="US.NY.081" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.081</id>
+        <name>Queens County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>982725</population>
+        <fips>081</fips>
+        <incits>36081</incits>
+      </desc>
+    </path>
+    <path d="M 514.1889 528.7314 522.4362 532.3772 525.6219 538.2084 524.1618 541.8099 516.2386 543.7473 510.6838 543.3784 507.1128 538.5802 509.05 533.804 514.1889 528.7314 Z" id="US.NY.047" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.047</id>
+        <name>Kings County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>1015728</population>
+        <fips>047</fips>
+        <incits>36047</incits>
+      </desc>
+    </path>
+    <path d="M 503.0713 536.5051 506.1648 540.4534 498.7215 546.9663 489.0367 549.9726 488.9376 545.7877 492.2047 544.2386 493.1167 537.9961 503.0713 536.5051 Z" id="US.NY.085" fill="#cee3f5" stroke="#6e6e6e" stroke-width="0.4">
+      <desc>
+        <state>New York</state>
+        <id>US.NY.085</id>
+        <name>Richmond County</name>
+        <stateAbbrev>NY</stateAbbrev>
+        <population>344319</population>
+        <fips>085</fips>
+        <incits>36085</incits>
+      </desc>
+    </path>
+  </g>
+</svg>

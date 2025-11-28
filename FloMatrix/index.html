@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>FloMatrix Terminal — FloEngine v1.0 (WebGL)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="assets/css/frame.css" />
+</head>
+<body>
+  <div id="fm-shell">
+    <!-- Top bar -->
+    <header id="fm-topbar">
+      <div id="fm-logo-block">
+        <img src="assets/logo-flomatrix.png" alt="FloMatrix" id="fm-logo-img" />
+        <div id="fm-logo-text">
+          <span class="fm-brand-name">FloMatrix</span>
+          <span class="fm-tagline">Institutional Orderflow for Everyday Traders</span>
+        </div>
+      </div>
+
+      <div id="fm-top-center">
+        <span id="fm-symbol-pill">BTCUSD</span>
+        <span id="fm-symbol-mode">• Paper</span>
+      </div>
+
+      <div id="fm-top-right">
+        <span id="fm-latency-dot"></span>
+        <span class="fm-latency-label">Latency &lt; 4 ms</span>
+      </div>
+    </header>
+
+    <!-- Main area: left tools / chart / price rail -->
+    <div id="fm-main">
+      <!-- Left drawing toolbar (visual for now) -->
+      <aside id="fm-left-toolbar">
+        <button class="fm-tool-btn active" data-label="Select / Pan">▢</button>
+        <button class="fm-tool-btn" data-label="Crosshair">✚</button>
+        <button class="fm-tool-btn" data-label="Trendline">／</button>
+        <button class="fm-tool-btn" data-label="Horizontal line">━</button>
+        <button class="fm-tool-btn" data-label="Rectangle">▭</button>
+        <button class="fm-tool-btn" data-label="Fib tools">Φ</button>
+        <button class="fm-tool-btn" data-label="Text note">T</button>
+        <button class="fm-tool-btn" data-label="Risk/Reward">R:R</button>
+        <button class="fm-tool-btn" data-label="Eraser">⌫</button>
+      </aside>
+
+      <!-- Chart region -->
+      <main id="fm-chart-region">
+        <canvas id="flo-gl-canvas"></canvas>
+      </main>
+
+      <!-- Right price rail (static for now) -->
+      <aside id="fm-price-rail">
+        <div class="fm-price-rail-header">PRICE</div>
+        <div class="fm-price-ticks">
+          <div class="fm-price-tick" style="top:10%;">
+            <span class="fm-price-tick-label">67,200</span>
+          </div>
+          <div class="fm-price-tick" style="top:30%;">
+            <span class="fm-price-tick-label">66,800</span>
+          </div>
+          <div class="fm-price-tick" style="top:50%;">
+            <span class="fm-price-tick-label">66,400</span>
+          </div>
+          <div class="fm-price-tick" style="top:70%;">
+            <span class="fm-price-tick-label">66,000</span>
+          </div>
+          <div class="fm-price-tick" style="top:90%;">
+            <span class="fm-price-tick-label">65,600</span>
+          </div>
+        </div>
+        <div class="fm-price-rail-footer">
+          <div class="fm-bid-row">
+            <span class="label">Bid</span>
+            <span>66,418.5</span>
+          </div>
+          <div class="fm-ask-row">
+            <span class="label">Ask</span>
+            <span>66,423.0</span>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Bottom status bar -->
+    <footer id="fm-bottom-rail">
+      <span>UTC • Session: Crypto</span>
+      <span>Orderflow: Disconnected</span>
+    </footer>
+  </div>
+
+  <!-- FloEngine entrypoint -->
+  <script type="module" src="app/main.js"></script>
+</body>
+</html>

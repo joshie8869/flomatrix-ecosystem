@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>FloMatrix — AnyChart Neon Mode</title>
+
+  <!-- AnyChart Core + Stock Modules -->
+  <script src="../anychart-installation-package/js/anychart-core.min.js"></script>
+  <script src="../anychart-installation-package/js/anychart-stock.min.js"></script>
+
+  <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      background: #000000;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
+
+    #chart-container {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* FloMatrix Neon Theme */
+    .anychart-credits {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="chart-container"></div>
+
+<script>
+  anychart.onDocumentReady(function () {
+
+    // Neon FloMatrix Palette
+    const bull = "#2ef27e";       // neon green
+    const bear = "#ff4d6b";       // neon red
+    const bg   = "#000000";       // true black
+
+    anychart.theme({
+      background: { fill: bg },
+      defaultFontColor: "#9fb4cc",
+      chart: {
+        background: { fill: bg },
+        padding: 0,
+      },
+      crosshair: {
+        enabled: true,
+        yStroke: { color: "#00ffaa", thickness: 1, dash: "4 4" },
+        xStroke: { color: "#00ffaa", thickness: 1, dash: "4 4" },
+      },
+      scroller: {
+        enabled: false
+      }
+    });
+
+    // -----------  SAMPLE DATA (YOU WILL CONNECT LIVE NEXT) ----------
+    let data = [
+      ["2025-11-27T16:00:00", 91200, 91500, 91000, 91450],
+      ["2025-11-27T16:01:00", 91450, 91750, 91300, 91600],
+      ["2025-11-27T16:02:00", 91600, 91900, 91500, 91800],
+      ["2025-11-27T16:03:00", 91800, 92000, 91700, 91950],
+      ["2025-11-27T16:04:00", 91950, 92200, 91850, 92150]
+    ];
+
+    let table = anychart.data.table();
+    table.addData(data);
+
+    let mapping = table.mapAs({
+      open: 1,
+      high: 2,
+      low: 3,
+      close: 4
+    });
+
+    // ---------- CHART INIT ----------
+    let chart = anychart.stock();
+
+    chart.background().fill(bg);
+    chart.padding(0);
+    chart.margin(0);
+
+    // MAIN PLOT
+    let plot = chart.plot(0);
+    plot.background().fill(bg);
+    plot.yGrid().enabled(false);
+    plot.xGrid().enabled(false);
+    plot.xMinorGrid().enabled(false);
+    plot.yMinorGrid().enabled(false);
+    plot.legend(false);
+
+    // ---------- CANDLESTICK SERIES ----------
+    let series = plot.candlestick(mapping);
+
+    series.fallingFill(bear);
+    series.risingFill(bull);
+    series.fallingStroke(bear);
+    series.risingStroke(bull);
+
+    series.tooltip().useHtml(true);
+    series.tooltip().titleFormat("{%X}");
+    series.tooltip().format(`
+      <span style="color:#2ef27e">Open:</span> {%open}<br/>
+      <span style="color:#2ef27e">High:</span> {%high}<br/>
+      <span style="color:#2ef27e">Low:</span> {%low}<br/>
+      <span style="color:#2ef27e">Close:</span> {%close}
+    `);
+
+    // remove scroller bar (institutional feel)
+    chart.scroller().enabled(false);
+
+    // draw
+    chart.container("chart-container");
+    chart.draw();
+  });
+</script>
+
+</body>
+</html>
+

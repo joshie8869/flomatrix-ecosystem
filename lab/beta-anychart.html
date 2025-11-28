@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FloMatrix Terminal v3.4 — Price Rail + Last Price Bubble</title>
+
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      background:#000;
+      color:#ccc;
+      font-family:Segoe UI,Roboto,Arial,sans-serif;
+      overflow:hidden;
+    }
+
+    :root {
+      --fm-neon:#2ef27e;
+      --fm-neon-soft:rgba(46,242,126,0.35);
+      --fm-neon-glow:rgba(46,242,126,0.18);
+      --fm-border:#181818;
+      --fm-panel:#0d0d0d;
+      --fm-muted:#999;
+      --fm-panel-dark:#050505;
+      --fm-bear:#ff4d6b;
+      --fm-bid:#00c16a;
+      --fm-ask:#f97373;
+    }
+
+    /************************************************************
+       SHELL + NEON BORDER
+    ************************************************************/
+    #fm-shell {
+      width:100vw;
+      height:100vh;
+      background:#000;
+      position:relative;
+    }
+    #fm-shell::before {
+      content:"";
+      position:absolute;
+      inset:0;
+      border:3px solid var(--fm-neon);
+      box-shadow:
+        0 0 18px var(--fm-neon-soft),
+        0 0 28px var(--fm-neon-glow);
+      pointer-events:none;
+    }
+    .fm-blade {
+      position:absolute;
+      width:26px;
+      height:26px;
+      border:3px solid var(--fm-neon);
+      box-shadow:0 0 8px var(--fm-neon-soft);
+    }
+    #blade-tl { top:-3px; left:-3px; border-right:none; border-bottom:none; }
+    #blade-tr { top:-3px; right:-3px; border-left:none; border-bottom:none; }
+    #blade-bl { bottom:-3px; left:-3px; border-right:none; border-top:none; }
+    #blade-br { bottom:-3px; right:-3px; border-left:none; border-top:none; }
+
+    /************************************************************
+       MENU BAR
+    ************************************************************/
+    #fm-menubar {
+      height:42px;
+      background:linear-gradient(to bottom,#050505,#0d0d0d);
+      border-bottom:1px solid var(--fm-border);
+      display:flex;
+      align-items:center;
+      padding:0 16px;
+      gap:20px;
+      position:relative;
+      z-index:20;
+    }
+
+    #fm-logo-dot {
+      width:10px;height:10px;border-radius:50%;
+      background:var(--fm-neon);
+      box-shadow:0 0 8px var(--fm-neon-soft);
+    }
+    #fm-title { color:#eee; letter-spacing:0.08em; font-size:13px; }
+    #fm-symbol { padding:3px 8px; border:1px solid #222;
+      color:var(--fm-neon); border-radius:4px; }
+
+    .fm-menu-bar { display:flex; gap:12px; }
+
+    .fm-menu { position:relative; }
+    .fm-menu-title {
+      padding:4px 10px;
+      font-size:12px;
+      color:var(--fm-muted);
+      cursor:pointer;
+      border-radius:4px;
+      transition:0.15s;
+    }
+    .fm-menu-title:hover {
+      color:var(--fm-neon);
+      border:1px solid var(--fm-neon-soft);
+      background:#0a0a0a;
+      box-shadow:0 0 8px var(--fm-neon-soft);
+    }
+
+    .fm-menu-panel {
+      position:absolute;
+      top:110%;
+      left:0;
+      min-width:220px;
+      background:#050505;
+      border-radius:6px;
+      border:1px solid var(--fm-border);
+      box-shadow:0 10px 20px rgba(0,0,0,0.75),
+                 0 0 12px var(--fm-neon-soft);
+      padding:6px 0;
+      display:none;
+      z-index:50;
+    }
+    .fm-menu:hover>.fm-menu-panel { display:block; }
+
+    .fm-menu-header {
+      padding:4px 12px;
+      font-size:11px;
+      color:#666;
+      letter-spacing:0.05em;
+    }
+
+    .fm-menu-item {
+      padding:6px 12px;
+      font-size:12px;
+      color:#ccc;
+      cursor:pointer;
+      white-space:nowrap;
+      position:relative;
+    }
+    .fm-menu-item:hover {
+      background:rgba(46,242,126,0.12);
+      color:var(--fm-neon);
+    }
+    .fm-menu-separator {
+      height:1px;
+      background:#181818;
+      margin:6px 8px;
+    }
+
+    .fm-menu-item.has-sub {
+      padding-right:28px;
+    }
+    .fm-menu-item.has-sub::after {
+      content:"▶";
+      position:absolute;
+      top:50%; right:8px;
+      transform:translateY(-50%);
+      font-size:10px;color:#666;
+    }
+
+    .fm-submenu {
+      position:absolute;
+      top:0; left:100%;
+      min-width:200px;
+      background:#050505;
+      border-radius:6px;
+      border:1px solid var(--fm-border);
+      display:none;
+      box-shadow:0 10px 20px rgba(0,0,0,0.75),
+                 0 0 12px var(--fm-neon-soft);
+      padding:6px 0;
+      z-index:60;
+    }
+    .fm-menu-item.has-sub:hover > .fm-submenu {
+      display:block;
+    }
+
+    #fm-menubar-right {
+      margin-left:auto;
+      display:flex;
+      gap:12px;
+      font-size:11px;
+      color:#777;
+    }
+    #fm-latency-dot {
+      width:7px;height:7px;border-radius:50%;
+      background:#13c06b;
+      box-shadow:0 0 6px #13c06b;
+    }
+
+    /************************************************************
+       LEFT TOOLBAR
+    ************************************************************/
+    #fm-left-tools {
+      position:absolute;
+      top:42px;            /* under menubar */
+      bottom:26px;         /* above time rail */
+      left:0;
+      width:46px;
+      background:var(--fm-panel-dark);
+      border-right:1px solid var(--fm-border);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      padding-top:10px;
+      gap:6px;
+      box-shadow:0 0 10px rgba(0,0,0,0.9);
+      z-index:15;
+    }
+
+    .fm-tool-btn {
+      width:30px;
+      height:30px;
+      border-radius:6px;
+      border:1px solid #1a1a1a;
+      background:#080808;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      position:relative;
+      transition:0.15s;
+      color:#cfcfcf;
+      font-size:15px;
+    }
+
+    .fm-tool-btn:hover {
+      border-color:var(--fm-neon-soft);
+      box-shadow:0 0 8px var(--fm-neon-soft);
+      color:var(--fm-neon);
+    }
+
+    .fm-tool-btn.active {
+      background:#101c10;
+      border-color:var(--fm-neon);
+      box-shadow:0 0 10px var(--fm-neon-soft);
+      color:var(--fm-neon);
+    }
+
+    .fm-tool-btn.group {
+      border-style:solid;
+    }
+
+    .fm-icon-select { font-size:13px; }
+    .fm-icon-crosshair { font-size:16px; }
+
+    .fm-icon-line {
+      width:18px; height:2px;
+      background:currentColor;
+      border-radius:1px;
+    }
+    .fm-icon-hline {
+      width:18px; height:2px;
+      background:currentColor;
+      border-radius:1px;
+    }
+    .fm-icon-vline {
+      width:2px; height:18px;
+      background:currentColor;
+      border-radius:1px;
+    }
+    .fm-icon-rect {
+      width:16px; height:10px;
+      border-radius:2px;
+      border:1px solid currentColor;
+    }
+    .fm-icon-fib {
+      width:18px; height:10px;
+      position:relative;
+    }
+    .fm-icon-fib::before,
+    .fm-icon-fib::after {
+      content:"";
+      position:absolute;
+      left:0; right:0;
+      height:1px;
+      background:currentColor;
+    }
+    .fm-icon-fib::before { top:2px; }
+    .fm-icon-fib::after  { bottom:2px; }
+
+    .fm-icon-text { font-size:14px; font-weight:bold; }
+    .fm-icon-rr {
+      width:16px; height:10px;
+      border-radius:2px;
+      border:1px solid currentColor;
+      border-left-width:3px;
+    }
+    .fm-icon-eraser {
+      width:14px; height:10px;
+      border-radius:2px;
+      border:1px solid currentColor;
+      transform:skewX(-15deg);
+    }
+
+    /* Tooltips */
+    .fm-tool-btn::after {
+      content:attr(data-label);
+      position:absolute;
+      left:42px;
+      top:50%;
+      transform:translateY(-50%);
+      background:rgba(10,10,10,0.95);
+      border:1px solid var(--fm-border);
+      color:#ddd;
+      font-size:11px;
+      padding:4px 8px;
+      border-radius:4px;
+      white-space:nowrap;
+      opacity:0;
+      pointer-events:none;
+      transition:0.12s;
+      box-shadow:0 6px 12px rgba(0,0,0,0.8);
+      z-index:80;
+    }
+    .fm-tool-btn:hover::after {
+      opacity:1;
+    }
+
+    /************************************************************
+       LEFT TOOL SUBMENUS
+    ************************************************************/
+    #fm-left-submenus {
+      position:absolute;
+      top:42px;
+      bottom:26px;
+      left:46px;
+      pointer-events:none;
+      z-index:30;
+    }
+
+    .fm-tool-submenu {
+      position:absolute;
+      top:10px;
+      left:0;
+      min-width:190px;
+      background:#050505;
+      border-radius:6px;
+      border:1px solid var(--fm-border);
+      box-shadow:0 10px 18px rgba(0,0,0,0.85),
+                 0 0 14px rgba(46,242,126,0.18);
+      padding:6px 0;
+      display:none;
+      pointer-events:auto;
+    }
+
+    .fm-tool-submenu-header {
+      padding:4px 10px;
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:0.05em;
+      color:#666;
+    }
+
+    .fm-tool-subitem {
+      padding:6px 10px;
+      font-size:12px;
+      color:#d0d0d0;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+    .fm-tool-subitem span {
+      font-size:11px;
+      color:#555;
+    }
+    .fm-tool-subitem:hover {
+      background:rgba(46,242,126,0.12);
+      color:var(--fm-neon);
+    }
+
+    .fm-tool-submenu-divider {
+      height:1px;
+      background:#181818;
+      margin:4px 8px;
+    }
+
+    /************************************************************
+       CHART AREA + PRICE RAIL
+    ************************************************************/
+    #fm-chart-wrap {
+      position:absolute;
+      top:42px;
+      bottom:26px;
+      left:0;
+      right:0;
+      background:#000;
+      padding-left:46px;   /* left tools */
+      padding-right:84px;  /* price rail */
+      z-index:10;
+    }
+
+    #flo-chart {
+      width:100%;
+      height:100%;
+      background:#000;
+      position:relative;
+    }
+
+    /* Right-side price rail */
+    #fm-price-rail {
+      position:absolute;
+      top:42px;
+      bottom:26px;
+      right:0;
+      width:84px;
+      background:linear-gradient(to right,#050505,#070707);
+      border-left:1px solid #151515;
+      box-shadow:0 0 10px rgba(0,0,0,0.9);
+      z-index:18;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      padding:8px 6px 8px 2px;
+      font-size:10px;
+    }
+
+    .fm-price-rail-header {
+      text-align:center;
+      color:#555;
+      text-transform:uppercase;
+      letter-spacing:0.08em;
+      font-size:9px;
+    }
+
+    .fm-price-ticks {
+      flex:1;
+      position:relative;
+      margin-top:4px;
+      margin-bottom:4px;
+    }
+
+    .fm-price-tick {
+      position:absolute;
+      left:0;
+      right:0;
+      height:1px;
+      background:#111;
+    }
+    .fm-price-tick-label {
+      position:absolute;
+      right:0;
+      top:-7px;
+      padding-left:4px;
+      font-size:10px;
+      color:#777;
+      background:rgba(0,0,0,0.9);
+    }
+
+    .fm-price-rail-footer {
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      font-size:10px;
+      color:#666;
+    }
+
+    .fm-bid-row, .fm-ask-row {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:2px 4px;
+      border-radius:4px;
+      background:#050505;
+    }
+    .fm-bid-row span.label { color:var(--fm-bid); }
+    .fm-ask-row span.label { color:var(--fm-ask); }
+
+    /************************************************************
+       LAST PRICE BUBBLE (floats over right edge)
+    ************************************************************/
+    #fm-last-price {
+      position:absolute;
+      right:0;
+      top:50%;
+      transform:translateY(-50%);
+      padding:3px 10px;
+      border-radius:12px 0 0 12px;
+      background:linear-gradient(to right,#020617,#059669);
+      border:1px solid #16a34a;
+      color:#e5ffe9;
+      font-size:12px;
+      display:flex;
+      align-items:center;
+      gap:6px;
+      box-shadow:
+        0 0 12px rgba(46,242,126,0.55),
+        0 0 20px rgba(22,163,101,0.65);
+      z-index:25;
+    }
+    #fm-last-price .dot {
+      width:7px;height:7px;border-radius:50%;
+      background:var(--fm-neon);
+      box-shadow:0 0 6px var(--fm-neon-soft);
+    }
+    #fm-last-price .price-text {
+      font-weight:500;
+      letter-spacing:0.03em;
+    }
+    #fm-last-price .change {
+      font-size:10px;
+      color:#9be8b9;
+    }
+
+    /************************************************************
+       TIME RAIL
+    ************************************************************/
+    #fm-time-rail {
+      position:absolute;
+      bottom:0;
+      left:0; right:0;
+      height:26px;
+      background:#050505;
+      border-top:1px solid var(--fm-border);
+      box-shadow:0 -1px 6px var(--fm-neon-soft);
+      display:flex;justify-content:space-between;
+      align-items:center;
+      padding:0 16px;
+      font-size:11px;color:#777;
+      z-index:20;
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="fm-shell">
+
+  <!-- Neon blades -->
+  <div id="blade-tl" class="fm-blade"></div>
+  <div id="blade-tr" class="fm-blade"></div>
+  <div id="blade-bl" class="fm-blade"></div>
+  <div id="blade-br" class="fm-blade"></div>
+
+  <!-- MENU BAR -->
+  <div id="fm-menubar">
+
+    <div id="fm-logo-dot"></div>
+    <div id="fm-title">FLOMATRIX</div>
+    <div id="fm-symbol">BTCUSD</div>
+
+    <div class="fm-menu-bar">
+
+      <!-- MARKETS -->
+      <div class="fm-menu">
+        <div class="fm-menu-title">Markets ▾</div>
+        <div class="fm-menu-panel">
+          <div class="fm-menu-header">Asset Classes</div>
+          <div class="fm-menu-item">Crypto – Spot</div>
+          <div class="fm-menu-item">Crypto – Perpetuals</div>
+          <div class="fm-menu-item">Futures – CME / NYMEX</div>
+          <div class="fm-menu-item">Equities – NASDAQ / NYSE</div>
+          <div class="fm-menu-item">Options (placeholder)</div>
+          <div class="fm-menu-item">FX – Majors + Exotic</div>
+          <div class="fm-menu-separator"></div>
+          <div class="fm-menu-item">Market Scanner…</div>
+          <div class="fm-menu-item">Watchlists…</div>
+        </div>
+      </div>
+
+      <!-- TIMEFRAMES -->
+      <div class="fm-menu">
+        <div class="fm-menu-title">Timeframes ▾</div>
+        <div class="fm-menu-panel">
+          <div class="fm-menu-header">Ultra-Fast</div>
+          <div class="fm-menu-item">1s</div>
+          <div class="fm-menu-item">5s</div>
+          <div class="fm-menu-item">15s</div>
+          <div class="fm-menu-separator"></div>
+          <div class="fm-menu-header">Scalp</div>
+          <div class="fm-menu-item">30s</div>
+          <div class="fm-menu-item">1m</div>
+          <div class="fm-menu-item">2m</div>
+          <div class="fm-menu-item">3m</div>
+          <div class="fm-menu-separator"></div>
+          <div class="fm-menu-header">Intraday</div>
+          <div class="fm-menu-item">5m</div>
+          <div class="fm-menu-item">15m</div>
+          <div class="fm-menu-item">30m</div>
+          <div class="fm-menu-separator"></div>
+          <div class="fm-menu-header">Higher Timeframe</div>
+          <div class="fm-menu-item">1h</div>
+          <div class="fm-menu-item">2h</div>
+          <div class="fm-menu-item">4h</div>
+          <div class="fm-menu-item">1D</div>
+          <div class="fm-menu-item">1W</div>
+          <div class="fm-menu-item">1M</div>
+          <div class="fm-menu-separator"></div>
+          <div class="fm-menu-item">Custom timeframes…</div>
+        </div>
+      </div>
+
+      <!-- INDICATORS -->
+      <div class="fm-menu">
+        <div class="fm-menu-title">Indicators ▾</div>
+        <div class="fm-menu-panel">
+
+          <div class="fm-menu-item has-sub">Trend
+            <div class="fm-submenu">
+              <div class="fm-menu-item">EMA / SMA / WMA / HMA</div>
+              <div class="fm-menu-item">VWAP / Anchored VWAP</div>
+              <div class="fm-menu-item">SuperTrend</div>
+              <div class="fm-menu-item">Donchian Channels</div>
+              <div class="fm-menu-item">Ichimoku</div>
+              <div class="fm-menu-item">MA Ribbon</div>
+            </div>
+          </div>
+
+          <div class="fm-menu-item has-sub">Momentum
+            <div class="fm-submenu">
+              <div class="fm-menu-item">RSI</div>
+              <div class="fm-menu-item">Stochastic</div>
+              <div class="fm-menu-item">MACD</div>
+              <div class="fm-menu-item">Williams %R</div>
+              <div class="fm-menu-item">Awesome Oscillator</div>
+            </div>
+          </div>
+
+          <div class="fm-menu-item has-sub">Volatility
+            <div class="fm-submenu">
+              <div class="fm-menu-item">ATR</div>
+              <div class="fm-menu-item">Bollinger Bands</div>
+              <div class="fm-menu-item">Keltner Channels</div>
+              <div class="fm-menu-item">Range Detector</div>
+            </div>
+          </div>
+
+          <div class="fm-menu-item has-sub">Volume / Orderflow
+            <div class="fm-submenu">
+              <div class="fm-menu-item">Session Volume Profile</div>
+              <div class="fm-menu-item">Fixed Range Profile</div>
+              <div class="fm-menu-item">CVD</div>
+              <div class="fm-menu-item">Bid/Ask Delta Bars</div>
+              <div class="fm-menu-item">Imbalance Clusters</div>
+              <div class="fm-menu-item">Iceberg Detector</div>
+              <div class="fm-menu-item">Absorption Zones</div>
+            </div>
+          </div>
+
+          <div class="fm-menu-item has-sub">Math / Advanced
+            <div class="fm-submenu">
+              <div class="fm-menu-item">Linear Regression</div>
+              <div class="fm-menu-item">Polynomial Regression</div>
+              <div class="fm-menu-item">Z-Score Bands</div>
+              <div class="fm-menu-item">FFT / Spectral</div>
+            </div>
+          </div>
+
+          <div class="fm-menu-separator"></div>
+          <div class="fm-menu-item">Indicator Manager…</div>
+        </div>
+      </div>
+
+      <!-- DRAWING TOOLS MENU -->
+      <div class="fm-menu">
+        <div class="fm-menu-title">Drawing Tools ▾</div>
+        <div class="fm-menu-panel">
+          <div class="fm-menu-header">Lines</div>
+          <div class="fm-menu-item">Trendline</div>
+          <div class="fm-menu-item">Horizontal Line</div>
+          <div class="fm-menu-item">Vertical Line</div>
+          <div class="fm-menu-item">Rays</div>
+          <div class="fm-menu-separator"></div>
+          <div class="fm-menu-header">Fibonacci</div>
+          <div class="fm-menu-item">Retracement</div>
+          <div class="fm-menu-item">Extension</div>
+          <div class="fm-menu-item">Time Zones</div>
+          <div class="fm-menu-item">Fib Channel</div>
+          <div class="fm-menu-separator"></div>
+          <div class="fm-menu-header">Shapes &amp; Text</div>
+          <div class="fm-menu-item">Rectangle</div>
+          <div class="fm-menu-item">Parallel Channel</div>
+          <div class="fm-menu-item">Ellipse</div>
+          <div class="fm-menu-item">Text / Note</div>
+          <div class="fm-menu-item">Risk/Reward Box</div>
+        </div>
+      </div>
+
+      <!-- STRATEGY -->
+      <div class="fm-menu">
+        <div class="fm-menu-title">Strategy ▾</div>
+        <div class="fm-menu-panel">
+          <div class="fm-menu-header">Backtesting</div>
+          <div class="fm-menu-item">Run Backtest…</div>
+          <div class="fm-menu-item">Walk-Forward Analysis</div>
+          <div class="fm-menu-item">Monte Carlo Simulation</div>
+          <div class="fm-menu-separator"></div>
+          <div class="fm-menu-header">Builder</div>
+          <div class="fm-menu-item">Visual Strategy Builder</div>
+          <div class="fm-menu-item">Code Editor (script)</div>
+          <div class="fm-menu-separator"></div>
+          <div class="fm-menu-header">Optimization</div>
+          <div class="fm-menu-item">Genetic Optimizer</div>
+          <div class="fm-menu-item">Parameter Sweep</div>
+        </div>
+      </div>
+
+      <!-- JOURNAL -->
+      <div class="fm-menu">
+        <div class="fm-menu-title">Journal ▾</div>
+        <div class="fm-menu-panel">
+          <div class="fm-menu-item">Open Live Journal</div>
+          <div class="fm-menu-item">Screenshot to Journal</div>
+          <div class="fm-menu-item">Voice Note Entry</div>
+          <div class="fm-menu-item">Tag Trades &amp; Emotions</div>
+          <div class="fm-menu-item">Export / Sync</div>
+        </div>
+      </div>
+
+      <!-- TOOLS -->
+      <div class="fm-menu">
+        <div class="fm-menu-title">Tools ▾</div>
+        <div class="fm-menu-panel">
+          <div class="fm-menu-header">Market Analysis</div>
+          <div class="fm-menu-item">Replay Mode</div>
+          <div class="fm-menu-item">Pattern Detector</div>
+          <div class="fm-menu-item">AI Signal Explain</div>
+          <div class="fm-menu-separator"></div>
+          <div class="fm-menu-header">Orderflow</div>
+          <div class="fm-menu-item">DOM (Depth of Market)</div>
+          <div class="fm-menu-item">Footprint Chart</div>
+          <div class="fm-menu-item">Heatmap (Liquidity)</div>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="fm-menu">
+        <div class="fm-menu-title">Settings ▾</div>
+        <div class="fm-menu-panel">
+          <div class="fm-menu-header">Theme</div>
+          <div class="fm-menu-item">FloMatrix Dark</div>
+          <div class="fm-menu-item">Neon Hard Mode</div>
+          <div class="fm-menu-item">Minimal Grey</div>
+          <div class="fm-menu-separator"></div>
+          <div class="fm-menu-header">System</div>
+          <div class="fm-menu-item">Hotkeys</div>
+          <div class="fm-menu-item">Broker Connections</div>
+          <div class="fm-menu-item">API Keys</div>
+          <div class="fm-menu-item">Cloud Backup</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT STATUS -->
+    <div id="fm-menubar-right">
+      <div id="fm-latency-dot"></div>
+      <div>Paper mode</div>
+      <div>|</div>
+      <div>Latency &lt; 4ms</div>
+    </div>
+
+  </div>
+
+  <!-- LEFT TOOLBAR -->
+  <div id="fm-left-tools">
+    <div class="fm-tool-btn active" data-label="Select / Pan" data-tool="select">
+      <span class="fm-icon-select">▢</span>
+    </div>
+    <div class="fm-tool-btn" data-label="Precision Crosshair" data-tool="crosshair">
+      <span class="fm-icon-crosshair">✚</span>
+    </div>
+
+    <div class="fm-tool-btn group" data-label="Lines family" data-tool="lines">
+      <div class="fm-icon-line"></div>
+    </div>
+
+    <div class="fm-tool-btn group" data-label="Fibonacci tools" data-tool="fib">
+      <div class="fm-icon-fib"></div>
+    </div>
+
+    <div class="fm-tool-btn group" data-label="Zones / Rectangles" data-tool="zones">
+      <div class="fm-icon-rect"></div>
+    </div>
+
+    <div class="fm-tool-btn group" data-label="Text / Callouts" data-tool="text">
+      <span class="fm-icon-text">T</span>
+    </div>
+
+    <div class="fm-tool-btn group" data-label="Risk/Reward tools" data-tool="rr">
+      <div class="fm-icon-rr"></div>
+    </div>
+
+    <div class="fm-tool-btn" data-label="Erase / Remove drawing" data-tool="eraser">
+      <div class="fm-icon-eraser"></div>
+    </div>
+  </div>
+
+  <!-- LEFT TOOL SUBMENUS -->
+  <div id="fm-left-submenus">
+    <!-- Lines submenu -->
+    <div class="fm-tool-submenu" data-for="lines">
+      <div class="fm-tool-submenu-header">Lines &amp; Rays</div>
+      <div class="fm-tool-subitem">Basic trendline <span>• free anchor</span></div>
+      <div class="fm-tool-subitem">Ray (extends right)</div>
+      <div class="fm-tool-subitem">Horizontal line</div>
+      <div class="fm-tool-subitem">Horizontal ray</div>
+      <div class="fm-tool-subitem">Vertical line</div>
+      <div class="fm-tool-submenu-divider"></div>
+      <div class="fm-tool-subitem">Extended trendline (both sides)</div>
+      <div class="fm-tool-subitem">Ray with mid-point handle</div>
+      <div class="fm-tool-submenu-divider"></div>
+      <div class="fm-tool-subitem">Magnet mode on/off</div>
+      <div class="fm-tool-subitem">Snap to OHLC</div>
+    </div>
+
+    <!-- Fib submenu -->
+    <div class="fm-tool-submenu" data-for="fib">
+      <div class="fm-tool-submenu-header">Fibonacci Suite</div>
+      <div class="fm-tool-subitem">Fib retracement (classic levels)</div>
+      <div class="fm-tool-subitem">Fib retracement (custom template)</div>
+      <div class="fm-tool-subitem">Fib extension (targets)</div>
+      <div class="fm-tool-subitem">Fib fan / time</div>
+      <div class="fm-tool-submenu-divider"></div>
+      <div class="fm-tool-subitem">Auto "golden zone" highlight</div>
+      <div class="fm-tool-subitem">Show confluence bands</div>
+      <div class="fm-tool-subitem">Save fib preset…</div>
+    </div>
+
+    <!-- Zones / rectangles submenu -->
+    <div class="fm-tool-submenu" data-for="zones">
+      <div class="fm-tool-submenu-header">Zones &amp; Regions</div>
+      <div class="fm-tool-subitem">Plain rectangle</div>
+      <div class="fm-tool-subitem">Premium/discount zone</div>
+      <div class="fm-tool-subitem">Liquidity sweep zone</div>
+      <div class="fm-tool-submenu-divider"></div>
+      <div class="fm-tool-subitem">Auto label: Demand / Supply</div>
+      <div class="fm-tool-subitem">Opacity presets (20 / 40 / 60%)</div>
+      <div class="fm-tool-subitem">Snap to wick extremes</div>
+    </div>
+
+    <!-- Text submenu -->
+    <div class="fm-tool-submenu" data-for="text">
+      <div class="fm-tool-submenu-header">Text &amp; Annotations</div>
+      <div class="fm-tool-subitem">Plain label</div>
+      <div class="fm-tool-subitem">Callout bubble</div>
+      <div class="fm-tool-subitem">Arrow label</div>
+      <div class="fm-tool-submenu-divider"></div>
+      <div class="fm-tool-subitem">Note to journal (link trade)</div>
+      <div class="fm-tool-subitem">Emotion tag: 🧠 / 😤 / 😴</div>
+      <div class="fm-tool-subitem">Save annotation preset…</div>
+    </div>
+
+    <!-- Risk/Reward submenu -->
+    <div class="fm-tool-submenu" data-for="rr">
+      <div class="fm-tool-submenu-header">Risk / Reward Tools</div>
+      <div class="fm-tool-subitem">Long position box (BUY RR)</div>
+      <div class="fm-tool-subitem">Short position box (SELL RR)</div>
+      <div class="fm-tool-subitem">Mirror RR (flip long/short)</div>
+      <div class="fm-tool-submenu-divider"></div>
+      <div class="fm-tool-subitem">Multi-target RR (T1 / T2 / T3)</div>
+      <div class="fm-tool-subitem">Partial exit ladder</div>
+      <div class="fm-tool-subitem">Auto size by % risk</div>
+      <div class="fm-tool-subitem">Auto size by fixed $ risk</div>
+      <div class="fm-tool-submenu-divider"></div>
+      <div class="fm-tool-subitem">Save RR template (crypto)</div>
+      <div class="fm-tool-subitem">Save RR template (futures)</div>
+      <div class="fm-tool-subitem">Set default: 1 : 1.5 : 3</div>
+    </div>
+  </div>
+
+  <!-- CHART AREA -->
+  <div id="fm-chart-wrap">
+    <div id="flo-chart">
+      <!-- last price bubble is visually over chart edge -->
+      <div id="fm-last-price">
+        <div class="dot"></div>
+        <div class="price-text">66,420.75</div>
+        <div class="change">+1.32%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PRICE RAIL (overlay on top of chart) -->
+  <div id="fm-price-rail">
+    <div class="fm-price-rail-header">PRICE</div>
+    <div class="fm-price-ticks">
+      <!-- static tick levels just for visual structure -->
+      <div class="fm-price-tick" style="top:10%;">
+        <div class="fm-price-tick-label">67,200</div>
+      </div>
+      <div class="fm-price-tick" style="top:30%;">
+        <div class="fm-price-tick-label">66,800</div>
+      </div>
+      <div class="fm-price-tick" style="top:50%;">
+        <div class="fm-price-tick-label">66,400</div>
+      </div>
+      <div class="fm-price-tick" style="top:70%;">
+        <div class="fm-price-tick-label">66,000</div>
+      </div>
+      <div class="fm-price-tick" style="top:90%;">
+        <div class="fm-price-tick-label">65,600</div>
+      </div>
+    </div>
+    <div class="fm-price-rail-footer">
+      <div class="fm-bid-row">
+        <span class="label">Bid</span>
+        <span>66,418.5</span>
+      </div>
+      <div class="fm-ask-row">
+        <span class="label">Ask</span>
+        <span>66,423.0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- TIME RAIL -->
+  <div id="fm-time-rail">
+    <span>UTC • Session: Crypto</span>
+    <span>Orderflow: Disconnected</span>
+  </div>
+
+</div>
+
+<script>
+  // Active-state toggling for left toolbar + show/hide submenus
+  const toolButtons = document.querySelectorAll('.fm-tool-btn');
+  const submenus = document.querySelectorAll('.fm-tool-submenu');
+
+  function showSubmenu(key) {
+    submenus.forEach(menu => {
+      if (menu.getAttribute('data-for') === key) {
+        menu.style.display = 'block';
+      } else {
+        menu.style.display = 'none';
+      }
+    });
+  }
+
+  function hideAllSubmenus() {
+    submenus.forEach(menu => menu.style.display = 'none');
+  }
+
+  toolButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      toolButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const key = btn.getAttribute('data-tool');
+      if (btn.classList.contains('group')) {
+        showSubmenu(key);
+      } else {
+        hideAllSubmenus();
+      }
+    });
+
+    btn.addEventListener('mouseenter', () => {
+      const key = btn.getAttribute('data-tool');
+      if (btn.classList.contains('group')) {
+        showSubmenu(key);
+      }
+    });
+  });
+
+  console.log("FloMatrix Terminal v3.4 loaded (price rail + last price bubble + bid/ask band).");
+</script>
+
+</body>
+</html>

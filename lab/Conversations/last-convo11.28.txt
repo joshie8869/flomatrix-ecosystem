@@ -1,0 +1,189 @@
+
+DETAILED SESSION SUMMARY (EXTENDED VERSION)
+
+This document provides a comprehensive breakdown of the major events, problems, fixes, improvements, and code iterations we worked through during this long development session focused primarily on building a professional-grade FloMatrix candlestick engine using AnyChart, testing neon themes, troubleshooting errors, and stabilizing chart behavior.
+
+------------------------------------------------------------
+1. INITIAL CONTEXT
+------------------------------------------------------------
+- You downloaded the full AnyChart installation package.
+- Extracted folders included /js, /css, /themes, /geodata, /locales, and sample HTML templates.
+- You created a lab folder (anychart-lab.html) to test new code safely before deploying to your real FloMatrix front end.
+
+------------------------------------------------------------
+2. FIRST SUCCESSFUL RENDER
+------------------------------------------------------------
+- We loaded the first working neon-green-on-black candlestick chart.
+- The data displayed correctly.
+- Tooltip showed proper OHLC values.
+- Crosshair worked.
+- Colors matched FloMatrix neon palette (#2ef27e for bull candles, #ff4d6b for bear).
+
+------------------------------------------------------------
+3. BUGS BEGIN APPEARING
+------------------------------------------------------------
+Multiple problems emerged as enhancements were added:
+
+A) TOOLTIP VALUES DISPLAYED AS "undefined"
+- Caused by using incorrect tooltip tokens.
+- Needed to use {%open}, {%high}, {%low}, {%close}.
+- Fixed successfully afterward.
+
+B) CROSSHAIR / GRIDLINES INCONSISTENT
+- Chart sometimes loaded with correct gridlines,
+- Other times chart went entirely black.
+
+C) FULL BLACK SCREEN (Blank chart)
+- Most serious recurring bug.
+- This happened because:
+    • plot.xAxis().stroke() is NOT valid in AnyChart Stock charts  
+    • chart.legend(false) caused error because stock charts don’t support legend() at chart level  
+    • Mis‑placed theme definitions caused internal failures  
+    • AnyChart silently fails and renders blank output when encountering invalid API calls
+
+------------------------------------------------------------
+4. DIAGNOSTICS & ERROR LOGGING
+------------------------------------------------------------
+You provided console logs showing:
+
+Error 1:
+"Stock chart itself doesn't support legend — stock plots do."
+
+Error 2:
+"plot.xAxis(...).stroke is not a function"
+
+Error 3:
+"Cannot read properties of null (reading 'enabled')"
+
+These errors indicated:
+- Attempting to modify the chart object instead of the PLOT object.
+- Attempting to use axis functions not supported on AnyChart Stock.
+- Accessing null because theme or plot was initialized at wrong time.
+
+------------------------------------------------------------
+5. REPAIRS IMPLEMENTED
+------------------------------------------------------------
+We systematically removed or corrected:
+
+✓ Removed invalid: chart.legend(false)  
+✓ Replaced with: plot.legend(false)
+
+✓ Removed invalid: plot.xAxis().stroke(...)  
+✓ Replaced with: plot.xAxis().ticks().stroke() AND plot.xAxis().labels().enabled(false)
+
+✓ Ensured:
+    • theme loads BEFORE chart creation  
+    • plot is created BEFORE customizing its elements  
+    • tooltip is defined AFTER series is created  
+
+------------------------------------------------------------
+6. IMPROVED CROSSHAIR BEHAVIOR
+------------------------------------------------------------
+- You wanted institutional-style dashed neon crosshair.
+- The working configuration used:
+    dash: "4 4"
+    color: "#00ffaa"
+
+Problems:
+- On failure, crosshair drew only vertical OR only horizontal.
+- On major failure, chart disappeared.
+
+Root cause:
+- ANY invalid plot API call causes AnyChart Stock to silently disable the plot.
+
+------------------------------------------------------------
+7. MULTIPLE RENDER STATES OBSERVED
+------------------------------------------------------------
+
+You saw 4 possible states:
+
+1. **Perfect Rendering**
+   - Candles visible
+   - Tooltip correct
+   - Crosshair dotted neon green
+   - Gridlines dark grey subtle
+   - Black background
+
+2. **Rendering With Tooltip Error**
+   - Tooltip rendered with HTML tags instead of values
+   - Caused by formatting tokens
+
+3. **Half-Working State**
+   - Crosshair but no tooltip
+   - Or candles but no axes
+
+4. **Total Failure (Black Screen)**
+   - API error prevented chart from drawing
+   - Console log showed legend or axis errors
+
+------------------------------------------------------------
+8. NEED FOR STABLE BASELINE ENGINE
+------------------------------------------------------------
+You emphasized:
+- NO reverting backwards
+- NO simplifying
+- NO half-code
+- Want full precision debugging, not resets
+
+So we established:
+- The engine must be locked into a stable baseline
+- Then enhancements layered carefully, one API at a time
+
+------------------------------------------------------------
+9. VERIFICATION TESTS YOU RAN
+------------------------------------------------------------
+You tested repeatedly:
+
+✔ Code loaded successfully  
+✔ Chart displayed  
+✔ Tooltip values correct  
+✔ Candle colors correct  
+✔ Crosshair aligned  
+✔ No undefined values  
+✔ No API errors  
+
+When broken:
+✖ Blank output  
+✖ Console errors  
+✖ Tooltip HTML instead of numbers  
+✖ Wrong candle dimensions  
+✖ Gridlines too bright or missing  
+
+------------------------------------------------------------
+10. SUMMARY OF WHAT WE FIXED SO FAR
+------------------------------------------------------------
+
+We addressed:
+- Theme errors
+- Tooltip formatting failures
+- Bad API calls for axes
+- Invalid legend calls
+- Stroke-type mismatches (stock vs standard chart)
+- Data mapping consistency
+- Crosshair rendering issues
+- CSS/container sizing issues
+- Alignment problems with candles
+
+------------------------------------------------------------
+11. WHAT IS STILL NEEDED / NEXT STEPS
+------------------------------------------------------------
+
+You want:
+- More realism (shadows, depth, bloom)
+- More accuracy (pixel-perfect candle spacing)
+- Better crosshair smoothing
+- Cleaner axes + institutional look
+- Scroller permanently disabled
+- Perfect neon palette
+- Stable, repeatable rendering EVERY time — no black screens
+
+You said:
+“Let’s keep this local until perfect. Only AFTER stable, then we integrate into FloMatrix.”
+
+Correct approach:
+- We iterate purely in your local lab folder  
+- Once stable, we port to flomatrix.trade/chart-engine  
+
+------------------------------------------------------------
+
+If you want an even **longer**, **chronological**, or **ultra-detailed** version (1,500+ lines), I can expand this further.
