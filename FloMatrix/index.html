@@ -21,7 +21,7 @@
 
         <button class="fm-symbol-pill" id="fm-symbol-pill">
           <span id="fm-symbol">BTCUSD</span>
-          <span class="fm-symbol-tf">paper</span>
+          <span class="fm-symbol-tf" id="fm-symbol-tf">paper</span>
         </button>
 
         <nav class="fm-menu-row">
@@ -30,14 +30,50 @@
             Markets
             <div class="fm-menu-dropdown">
               <div class="fm-menu-section-title">Crypto</div>
-              <div class="fm-menu-option">BTCUSD<span class="fm-option-muted">Spot / Perp</span></div>
-              <div class="fm-menu-option">ETHUSD<span class="fm-option-muted">Spot / Perp</span></div>
-              <div class="fm-menu-option">SOLUSD<span class="fm-option-muted">High vola</span></div>
+              <div class="fm-menu-option"
+                   data-symbol="BTCUSD"
+                   data-asset-class="crypto"
+                   data-venue="BINANCE"
+                   data-session-label="Session: Crypto">
+                BTCUSD<span class="fm-option-muted">Spot / Perp</span>
+              </div>
+              <div class="fm-menu-option"
+                   data-symbol="ETHUSD"
+                   data-asset-class="crypto"
+                   data-venue="BINANCE"
+                   data-session-label="Session: Crypto">
+                ETHUSD<span class="fm-option-muted">Spot / Perp</span>
+              </div>
+              <div class="fm-menu-option"
+                   data-symbol="SOLUSD"
+                   data-asset-class="crypto"
+                   data-venue="BINANCE"
+                   data-session-label="Session: Crypto">
+                SOLUSD<span class="fm-option-muted">High vola</span>
+              </div>
               <div class="fm-menu-separator"></div>
               <div class="fm-menu-section-title">Futures</div>
-              <div class="fm-menu-option">ES<span class="fm-option-muted">CME</span></div>
-              <div class="fm-menu-option">NQ<span class="fm-option-muted">CME</span></div>
-              <div class="fm-menu-option">CL<span class="fm-option-muted">NYMEX</span></div>
+              <div class="fm-menu-option"
+                   data-symbol="ES"
+                   data-asset-class="futures"
+                   data-venue="CME"
+                   data-session-label="US Index Futures">
+                ES<span class="fm-option-muted">CME</span>
+              </div>
+              <div class="fm-menu-option"
+                   data-symbol="NQ"
+                   data-asset-class="futures"
+                   data-venue="CME"
+                   data-session-label="US Index Futures">
+                NQ<span class="fm-option-muted">CME</span>
+              </div>
+              <div class="fm-menu-option"
+                   data-symbol="CL"
+                   data-asset-class="futures"
+                   data-venue="NYMEX"
+                   data-session-label="Energy Futures">
+                CL<span class="fm-option-muted">NYMEX</span>
+              </div>
             </div>
           </div>
 
@@ -46,15 +82,43 @@
             Timeframes
             <div class="fm-menu-dropdown">
               <div class="fm-menu-section-title">Scalping</div>
-              <div class="fm-menu-option">15s / 30s<span class="fm-option-muted">tape-driven</span></div>
-              <div class="fm-menu-option">1m / 3m</div>
-              <div class="fm-menu-option">5m</div>
+              <div class="fm-menu-option"
+                   data-timeframe="15s"
+                   data-timeframe-label="15s / 30s">
+                15s / 30s<span class="fm-option-muted">tape-driven</span>
+              </div>
+              <div class="fm-menu-option"
+                   data-timeframe="1m"
+                   data-timeframe-label="1m / 3m">
+                1m / 3m
+              </div>
+              <div class="fm-menu-option"
+                   data-timeframe="5m"
+                   data-timeframe-label="5m">
+                5m
+              </div>
               <div class="fm-menu-separator"></div>
               <div class="fm-menu-section-title">Swing</div>
-              <div class="fm-menu-option">15m</div>
-              <div class="fm-menu-option">1h</div>
-              <div class="fm-menu-option">4h</div>
-              <div class="fm-menu-option">1D</div>
+              <div class="fm-menu-option"
+                   data-timeframe="15m"
+                   data-timeframe-label="15m">
+                15m
+              </div>
+              <div class="fm-menu-option"
+                   data-timeframe="1h"
+                   data-timeframe-label="1h">
+                1h
+              </div>
+              <div class="fm-menu-option"
+                   data-timeframe="4h"
+                   data-timeframe-label="4h">
+                4h
+              </div>
+              <div class="fm-menu-option"
+                   data-timeframe="1D"
+                   data-timeframe-label="1D">
+                1D
+              </div>
             </div>
           </div>
 
@@ -250,8 +314,8 @@
     <!-- BOTTOM BAR -->
     <footer class="fm-bottombar">
       <div class="fm-bottombar-left">
-        <div class="fm-session-pill">UTC • Session: Crypto</div>
-        <div>Time axis – session</div>
+        <div class="fm-session-pill" id="fm-session-pill">UTC • Session: Crypto</div>
+        <div id="fm-time-axis-label">Time axis – session</div>
       </div>
       <div class="fm-bottombar-right">
         <div class="fm-status-disconnected">Orderflow: Disconnected</div>
