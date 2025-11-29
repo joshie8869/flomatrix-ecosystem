@@ -11,7 +11,6 @@ jobs:
     env:
       SSH_HOST: ${{ secrets.SSH_HOST }}
       SSH_USER: ${{ secrets.SSH_USER }}
-      PROJECT_ROOT: ${{ secrets.PROJECT_ROOT }}
 
     steps:
       # 1) Checkout repo
@@ -22,29 +21,32 @@ jobs:
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
-          # write the private key from GitHub Secrets into a file
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
-          # pre-accept host key to avoid interactive prompt
           ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
-      # 3) Deploy to VPS (frontend + backend)
+      # 3) Deploy to VPS
       - name: Deploy FloMatrix (frontend + backend)
         run: |
+          set -e
+
+          REMOTE_ROOT="${{ secrets.PROJECT_ROOT }}"
           echo ">>> Testing SSH connection..."
-          ssh -i ~/.ssh/id_ed25519 "$SSH_USER@$SSH_HOST" "hostname && echo 'SSH OK'"
+          ssh -i ~/.ssh/id_ed25519 "$SSH_USER@$SSH_HOST" "hostname && echo SSH_OK"
+
+          echo ">>> Remote project root: $REMOTE_ROOT"
 
           echo ">>> Creating temp deploy folder on server..."
-          ssh -i ~/.ssh/id_ed25519 "$SSH_USER@$SSH_HOST" "mkdir -p $PROJECT_ROOT/tmp_from_github"
+          ssh -i ~/.ssh/id_ed25519 "$SSH_USER@$SSH_HOST" "mkdir -p \"$REMOTE_ROOT/tmp_from_github\""
 
           echo ">>> Uploading repo snapshot to server..."
-          scp -i ~/.ssh/id_ed25519 -r ./FloMatrix "$SSH_USER@$SSH_HOST:$PROJECT_ROOT/tmp_from_github/FloMatrix"
+          scp -i ~/.ssh/id_ed25519 -r ./FloMatrix "$SSH_USER@$SSH_HOST:\"$REMOTE_ROOT/tmp_from_github/FloMatrix\""
 
           echo ">>> Syncing into live project directory..."
           ssh -i ~/.ssh/id_ed25519 "$SSH_USER@$SSH_HOST" "
-            cd $PROJECT_ROOT && \
+            cd \"$REMOTE_ROOT\" && \
             rm -rf FloMatrix_old && \
             if [ -d FloMatrix ]; then mv FloMatrix FloMatrix_old; fi && \
             mv tmp_from_github/FloMatrix ./FloMatrix && \
