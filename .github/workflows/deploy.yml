@@ -42,11 +42,10 @@ jobs:
           "
 
           echo ">>> Creating deploy archive (excluding AnyChart installer bundle)..."
-          # This archive includes the FloMatrix folder, but skips the heavy installer:
-          #   FloMatrix/anychart-installation-package/**
+          # NOTE: all options (including --exclude) must come BEFORE the path 'FloMatrix'
           tar czf flomatrix_deploy.tgz \
-            FloMatrix \
-            --exclude='FloMatrix/anychart-installation-package'
+            --exclude='FloMatrix/anychart-installation-package' \
+            FloMatrix
 
           echo ">>> Uploading deploy archive to server..."
           scp flomatrix_deploy.tgz "$SSH_USER@$SSH_HOST:${REMOTE_ROOT}/tmp_from_github/"
