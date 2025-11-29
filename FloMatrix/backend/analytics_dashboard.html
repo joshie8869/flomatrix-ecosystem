@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Trading Analytics Dashboard</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0b0c10;
+      color: #f5f5f5;
+    }
+    header {
+      background: #11141b;
+      padding: 10px 20px;
+      border-bottom: 1px solid #222;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header h1 {
+      font-size: 18px;
+      margin: 0;
+    }
+    #status {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+    .container {
+      display: grid;
+      grid-template-columns: 280px 1fr 1fr;
+      gap: 10px;
+      padding: 10px;
+      height: calc(100vh - 50px);
+      box-sizing: border-box;
+    }
+    .panel {
+      background: #11141b;
+      border-radius: 6px;
+      border: 1px solid #222;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .panel h2 {
+      font-size: 14px;
+      margin: 0 0 6px 0;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #222;
+    }
+    label {
+      font-size: 12px;
+      display: block;
+      margin-top: 6px;
+    }
+    input, select, button {
+      font-size: 12px;
+      margin-top: 4px;
+      padding: 4px;
+      border-radius: 4px;
+      border: 1px solid #333;
+      background: #151822;
+      color: #f5f5f5;
+      outline: none;
+    }
+    button {
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1e2330;
+    }
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 8px;
+    }
+    pre {
+      background: #05060a;
+      border-radius: 4px;
+      border: 1px solid #222;
+      padding: 6px;
+      font-size: 11px;
+      line-height: 1.3;
+      overflow: auto;
+      flex: 1;
+    }
+    .dom-wrapper {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      height: 100%;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+    th, td {
+      padding: 2px 4px;
+      text-align: right;
+    }
+    th {
+      background: #151822;
+      border-bottom: 1px solid #222;
+    }
+    tr.bid-row td {
+      color: #78ff78;
+    }
+    tr.ask-row td {
+      color: #ff7878;
+    }
+    tr:nth-child(even) {
+      background: #11141b;
+    }
+    tr:nth-child(odd) {
+      background: #0c0f17;
+    }
+    .metrics {
+      font-size: 11px;
+      margin-top: 6px;
+      border-top: 1px solid #222;
+      padding-top: 4px;
+    }
+    .metrics span {
+      display: inline-block;
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Trading Analytics Dashboard (OKX BTC-USDT-SWAP)</h1>
+    <div id="status">Backend: <span id="backendStatus">checking...</span></div>
+  </header>
+
+  <div class="container">
+    <!-- LEFT: Controls -->
+    <div class="panel">
+      <h2>Controls</h2>
+
+      <label for="apiBase">API Base URL</label>
+      <input id="apiBase" type="text" value="http://127.0.0.1:8000" />
+
+      <label for="providerSel">Provider</label>
+      <select id="providerSel">
+        <option value="okx" selected>OKX (primary)</option>
+        <option value="binance">Binance</option>
+        <option value="dxfeed">dxFeed</option>
+      </select>
+      <button id="setProviderBtn">Set Provider</button>
+
+      <div class="btn-row">
+        <button id="btnL1">Get L1</button>
+        <button id="btnL2">Get L2</button>
+        <button id="btnTrades">Get Trades</button>
+      </div>
+
+      <div class="btn-row">
+        <button id="btnDelta">Get Delta</button>
+        <button id="btnCVD">Get CVD</button>
+      </div>
+
+      <div class="btn-row">
+        <button id="btnDomOnce">Get DOM Once</button>
+        <button id="btnDomStart">Start DOM Live</button>
+        <button id="btnDomStop">Stop DOM Live</button>
+      </div>
+
+      <div class="btn-row">
+        <button id="btnMob">Get MOB</button>
+        <button id="btnVolProfile">Volume Profile</button>
+      </div>
+
+      <div class="btn-row">
+        <button id="btnFootTime">Footprint Time (1m)</button>
+        <button id="btnFootEvent">Footprint Event</button>
+      </div>
+
+      <div class="btn-row">
+        <button id="btnImbTime">Imbalances Time</button>
+        <button id="btnImbEvent">Imbalances Event</button>
+      </div>
+
+      <label for="domDepth">DOM Depth</label>
+      <input id="domDepth" type="number" value="20" min="1" max="200" />
+
+      <label for="logArea">Last JSON Response</label>
+      <pre id="logArea">...</pre>
+    </div>
+
+    <!-- MIDDLE: DOM Ladder -->
+    <div class="panel">
+      <h2>DOM Ladder (Live Depth)</h2>
+      <div class="dom-wrapper">
+        <div>
+          <table>
+            <thead>
+              <tr><th colspan="2">Bids</th></tr>
+              <tr><th>Price</th><th>Size</th></tr>
+            </thead>
+            <tbody id="bidsBody"></tbody>
+          </table>
+        </div>
+        <div>
+          <table>
+            <thead>
+              <tr><th colspan="2">Asks</th></tr>
+              <tr><th>Price</th><th>Size</th></tr>
+            </thead>
+            <tbody id="asksBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="metrics" id="domMetrics">
+        BidPressure: -, AskPressure: -, StackingB: -, StackingA: -, PullingB: -, PullingA: -
+      </div>
+    </div>
+
+    <!-- RIGHT: Footprint / Volume Profile / MOB summary -->
+    <div class="panel">
+      <h2>Analytics Snapshot</h2>
+      <pre id="analyticsArea">Use buttons on the left to fetch:
+- Footprint (time & event)
+- Imbalances
+- Volume profile
+- MOB (aggressive flow)
+- Delta / CVD
+      </pre>
+    </div>
+  </div>
+
+  <script>
+    const backendStatusEl = document.getElementById("backendStatus");
+    const apiBaseInput = document.getElementById("apiBase");
+    const logArea = document.getElementById("logArea");
+    const analyticsArea = document.getElementById("analyticsArea");
+    const bidsBody = document.getElementById("bidsBody");
+    const asksBody = document.getElementById("asksBody");
+    const domMetricsEl = document.getElementById("domMetrics");
+
+    let domTimer = null;
+
+    async function checkBackend() {
+      try {
+        const base = apiBaseInput.value.trim();
+        const res = await fetch(base + "/");
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+        backendStatusEl.textContent = "OK (" + data.default + ")";
+        backendStatusEl.style.color = "#78ff78";
+      } catch (e) {
+        backendStatusEl.textContent = "ERROR";
+        backendStatusEl.style.color = "#ff7878";
+      }
+    }
+
+    function pretty(obj) {
+      try {
+        return JSON.stringify(obj, null, 2);
+      } catch {
+        return String(obj);
+      }
+    }
+
+    async function apiGet(path) {
+      const base = apiBaseInput.value.trim();
+      const res = await fetch(base + path);
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error("HTTP " + res.status + ": " + txt);
+      }
+      return res.json();
+    }
+
+    async function apiPost(path, bodyObj) {
+      const base = apiBaseInput.value.trim();
+      const res = await fetch(base + path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bodyObj)
+      });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error("HTTP " + res.status + ": " + txt);
+      }
+      return res.json();
+    }
+
+    function renderDOM(data) {
+      bidsBody.innerHTML = "";
+      asksBody.innerHTML = "";
+
+      if (!data) return;
+
+      if (Array.isArray(data.bids)) {
+        data.bids.forEach(([price, size]) => {
+          const tr = document.createElement("tr");
+          tr.className = "bid-row";
+          const tdP = document.createElement("td");
+          const tdS = document.createElement("td");
+          tdP.textContent = price.toFixed(2);
+          tdS.textContent = size.toFixed(4);
+          tr.appendChild(tdP);
+          tr.appendChild(tdS);
+          bidsBody.appendChild(tr);
+        });
+      }
+
+      if (Array.isArray(data.asks)) {
+        data.asks.forEach(([price, size]) => {
+          const tr = document.createElement("tr");
+          tr.className = "ask-row";
+          const tdP = document.createElement("td");
+          const tdS = document.createElement("td");
+          tdP.textContent = price.toFixed(2);
+          tdS.textContent = size.toFixed(4);
+          tr.appendChild(tdP);
+          tr.appendChild(tdS);
+          asksBody.appendChild(tr);
+        });
+      }
+
+      if (data.metrics) {
+        const m = data.metrics;
+        domMetricsEl.textContent =
+          `BidPressure: ${m.bid_pressure.toFixed(2)}, ` +
+          `AskPressure: ${m.ask_pressure.toFixed(2)}, ` +
+          `StackingB: ${m.stacking_bids.toFixed(2)}, ` +
+          `StackingA: ${m.stacking_asks.toFixed(2)}, ` +
+          `PullingB: ${m.pulling_bids.toFixed(2)}, ` +
+          `PullingA: ${m.pulling_asks.toFixed(2)}`;
+      }
+    }
+
+    // --------- Button wiring ---------
+
+    document.getElementById("setProviderBtn").onclick = async () => {
+      try {
+        const p = document.getElementById("providerSel").value;
+        const data = await apiPost("/provider", { name: p });
+        logArea.textContent = pretty(data);
+        await checkBackend();
+      } catch (e) {
+        logArea.textContent = "Error: " + e.message;
+      }
+    };
+
+    document.getElementById("btnL1").onclick = async () => {
+      try {
+        const data = await apiGet("/l1");
+        logArea.textContent = pretty(data);
+      } catch (e) {
+        logArea.textContent = "Error: " + e.message;
+      }
+    };
+
+    document.getElementById("btnL2").onclick = async () => {
+      try {
+        const data = await apiGet("/l2");
+        logArea.textContent = pretty(data);
+      } catch (e) {
+        logArea.textContent = "Error: " + e.message;
+      }
+    };
+
+    document.getElementById("btnTrades").onclick = async () => {
+      try {
+        const data = await apiGet("/trades?limit=50");
+        logArea.textContent = pretty(data);
+      } catch (e) {
+        logArea.textContent = "Error: " + e.message;
+      }
+    };
+
+    document.getElementById("btnDelta").onclick = async () => {
+      try {
+        const data = await apiGet("/delta?limit=200");
+        logArea.textContent = pretty(data);
+        analyticsArea.textContent = "Delta sample:\n" + pretty(data.entries.slice(-10));
+      } catch (e) {
+        logArea.textContent = "Error: " + e.message;
+      }
+    };
+
+    document.getElementById("btnCVD").onclick = async () => {
+      try {
+        const data = await apiGet("/cvd");
+        logArea.textContent = pretty(data);
+        analyticsArea.textContent = "CVD:\n" + pretty(data);
+      } catch (e) {
+        logArea.textContent = "Error: " + e.message;
+      }
+    };
+
+    document.getElementById("btnDomOnce").onclick = async () => {
+      try {
+        const depth = Number(document.getElementById("domDepth").value || 20);
+        const data = await apiGet("/dom?depth=" + depth);
+        logArea.textContent = pretty(data);
+        renderDOM(data);
+      } catch (e) {
+        logArea.textContent = "Error: " + e.message;
+      }
+    };
+
+    document.getElementById("btnDomStart").onclick = () => {
+      if (domTimer) return;
+      domTimer = setInterval(async () => {
+        try {
+          const depth = Number(document.getElementById("domDepth").value || 20);
+          const data = await apiGet("/dom?depth=" + depth);
+          renderDOM(data);
+        } catch (e) {
+          console.warn("DOM error:", e.message);
+        }
+      }, 1000);
+    };
+
+    document.getElementById("btnDomStop").onclick = () => {
+      if (domTimer) {
+        clearInterval(domTimer);
+        domTimer = null;
+      }
+    };
+
+    document.getElementById("btnMob").onclick = async () => {
+      try {
+        const data = await apiGet("/mob?limit_trades=40");
+        logArea.textContent = pretty(data);
+        analyticsArea.textContent = "MOB metrics:\n" + pretty(data.metrics);
+      } catch (e) {
+        logArea.textContent = "Error: " + e.message;
+      }
+    };
+
+    document.getElementById("btnVolProfile").onclick = async () => {
+      try {
+        const data = await apiGet("/volume_profile");
+        logArea.textContent = pretty(data);
+        analyticsArea.textContent = "Volume Profile (first 30 rows):\n" +
+          pretty(data.rows.slice(0, 30));
+      } catch (e) {
+        logArea.textContent = "Error: " + e.message;
+      }
+    };
+
+    document.getElementById("btnFootTime").onclick = async () => {
+      try {
+        const data = await apiGet("/footprint/time?limit=5");
+        logArea.textContent = pretty(data);
+        analyticsArea.textContent = "Last time-based footprint bar:\n" +
+          pretty(data.bars[data.bars.length - 1]);
+      } catch (e) {
+        logArea.textContent = "Error: " + e.message;
+      }
+    };
+
+    document.getElementById("btnFootEvent").onclick = async () => {
+      try {
+        const data = await apiGet("/footprint/event?limit=5");
+        logArea.textContent = pretty(data);
+        analyticsArea.textContent = "Last event-based footprint bar:\n" +
+          pretty(data.bars[data.bars.length - 1]);
+      } catch (e) {
+        logArea.textContent = "Error: " + e.message;
+      }
+    };
+
+    document.getElementById("btnImbTime").onclick = async () => {
+      try {
+        const data = await apiGet("/imbalances/time");
+        logArea.textContent = pretty(data);
+        analyticsArea.textContent = "Time-based imbalances:\n" +
+          pretty(data.imbalances);
+      } catch (e) {
+        logArea.textContent = "Error: " + e.message;
+      }
+    };
+
+    document.getElementById("btnImbEvent").onclick = async () => {
+      try {
+        const data = await apiGet("/imbalances/event");
+        logArea.textContent = pretty(data);
+        analyticsArea.textContent = "Event-based imbalances:\n" +
+          pretty(data.imbalances);
+      } catch (e) {
+        logArea.textContent = "Error: " + e.message;
+      }
+    };
+
+    // Initial backend check
+    checkBackend();
+  </script>
+</body>
+</html>
