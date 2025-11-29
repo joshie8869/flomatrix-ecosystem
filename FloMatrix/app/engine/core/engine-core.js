@@ -1,44 +1,50 @@
 // app/engine/core/engine-core.js
-// FloEngine v1.5 → v3.0 — core init + resize + render loop + footprint wiring
+// FloEngine v3.0 — Institutional Chart Core
+// Handles chart initialization, canvas setup, resize system,
+// coordinate transforms, pan/zoom windowing, and render loop.
+//
+// FM-ENGINE-CORE-001
 
 import { createGLContext } from "./gl-context.js";
-import { createShaderProgram } from "./shaders.js";
-import { initBuffers } from "./buffers.js";
-import { renderFrame, createEngineState } from "./renderer.js";
-import {
-  FOOTPRINT_MODE_BID_ASK,
-  rebuildFootprintBuffer
-} from "../modules/footprint.js";
+import { FloRenderer } from "./renderer.js";
+import { SAMPLE_OHLC } from "./sample-ohlc.js";
 
-/* FM-PAD:BEGIN-ENGINE-CORE-INIT */
 export function initFloEngine(canvasId) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) {
-    console.error("FloEngine: canvas not found:", canvasId);
-    return;
+    console.error("[FloEngine] Canvas not found:", canvasId);
+    return null;
   }
 
+  // -------------------------
+  // STATE
+  // -------------------------
+  let state = {
+    data: SAMPLE_OHLC,              // OHLC array [{t, o, h, l, c, v}]
+    rangeBars: 200,                 // Number of bars visible
+    offset: 0,                      // Pan offset (bars)
+    timeframe: "5m",                // default
+    symbol: "BTCUSD",
+    assetClass: "crypto",
+    venue: "BINANCE",
+    lastResize: 0,
+  };
+
+  // -------------------------
+  // GL CONTEXT
+  // -------------------------
   const gl = createGLContext(canvas);
   if (!gl) {
-    console.error("FloEngine: WebGL not supported.");
-    return;
+    console.error("[FloEngine] WebGL initialization failed");
+    return null;
   }
 
-  const program = createShaderProgram(gl);
-  if (!program) {
-    console.error("FloEngine: failed to create shader program.");
-    return;
-  }
+  const renderer = new FloRenderer(gl);
 
-  gl.useProgram(program);
-
-  // Enable alpha blending for faint grid / overlays
-  gl.enable(gl.BLEND);
-  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
-  const uResolution = gl.getUniformLocation(program, "u_resolution");
-
-  function resizeCanvas() {
+  // -------------------------
+  // SIZING & RESIZING
+  // -------------------------
+  function resize() {
     const rect = canvas.getBoundingClientRect();
     const dpr = window.devicePixelRatio || 1;
 
@@ -46,73 +52,125 @@ export function initFloEngine(canvasId) {
     canvas.height = rect.height * dpr;
 
     gl.viewport(0, 0, canvas.width, canvas.height);
+    renderer.setViewport(canvas.width, canvas.height);
 
-    if (uResolution) {
-      gl.uniform2f(uResolution, canvas.width, canvas.height);
-    }
+    state.lastResize = performance.now();
+    requestRender();
+  }
 
-    // When we resize, we rebuild core buffers from scratch.
-    const newBuffers = initBuffers(gl, program, () => ({
-      width: canvas.width,
-      height: canvas.height
-    }));
+  window.addEventListener("resize", resize);
+  resize();
 
-    // Preserve footprint mode if we already had a state.
-    const prevMode =
-      window.__floEngineState &&
-      window.__floEngineState.buffers &&
-      typeof window.__floEngineState.buffers.footprintMode === "number"
-        ? window.__floEngineState.buffers.footprintMode
-        : FOOTPRINT_MODE_BID_ASK;
+  // -------------------------
+  // COORDINATE TRANSFORMS
+  // -------------------------
+  function getVisibleData() {
+    const { data, rangeBars, offset } = state;
 
-    // Rebuild footprint buffer for the chosen mode.
-    rebuildFootprintBuffer(gl, newBuffers, prevMode);
+    const startIndex = Math.max(0, data.length - rangeBars - offset);
+    const endIndex = Math.max(startIndex + 1, data.length - offset);
 
-    if (window.__floEngineState) {
-      window.__floEngineState.buffers = newBuffers;
-    } else {
-      // initial path
-      const initialState = createEngineState(gl, canvas, program, newBuffers);
-      window.__floEngineState = initialState;
+    return data.slice(startIndex, endIndex);
+  }
+
+  function screenToDataX(px) {
+    const bars = state.rangeBars;
+    return (px / canvas.width) * bars;
+  }
+
+  // -------------------------
+  // PAN / ZOOM
+  // -------------------------
+  let isPanning = false;
+  let panStartX = 0;
+  let panStartOffset = 0;
+
+  canvas.addEventListener("mousedown", (e) => {
+    isPanning = true;
+    panStartX = e.clientX;
+    panStartOffset = state.offset;
+  });
+
+  canvas.addEventListener("mousemove", (e) => {
+    if (!isPanning) return;
+
+    const dx = e.clientX - panStartX;
+    const barsMoved = screenToDataX(-dx);
+
+    state.offset = Math.max(0, panStartOffset + Math.floor(barsMoved));
+    requestRender();
+  });
+
+  const stopPanning = () => {
+    isPanning = false;
+  };
+
+  canvas.addEventListener("mouseup", stopPanning);
+  canvas.addEventListener("mouseleave", stopPanning);
+  window.addEventListener("mouseup", stopPanning);
+
+  canvas.addEventListener(
+    "wheel",
+    (e) => {
+      e.preventDefault();
+
+      const delta = Math.sign(e.deltaY);
+      const newRange = state.rangeBars + delta * 10;
+
+      state.rangeBars = Math.min(Math.max(20, newRange), 2000);
+      requestRender();
+    },
+    { passive: false }
+  );
+
+  // -------------------------
+  // RENDER LOOP (THROTTLED)
+  // -------------------------
+  let renderQueued = false;
+
+  function requestRender() {
+    if (!renderQueued) {
+      renderQueued = true;
+      requestAnimationFrame(render);
     }
   }
 
-  // Initial buffers + footprint
-  const initialBuffers = initBuffers(gl, program, () => ({
-    width: canvas.width || canvas.clientWidth || 1280,
-    height: canvas.height || canvas.clientHeight || 720
-  }));
+  function render() {
+    renderQueued = false;
 
-  rebuildFootprintBuffer(gl, initialBuffers, FOOTPRINT_MODE_BID_ASK);
-
-  const state = createEngineState(gl, canvas, program, initialBuffers);
-
-  // Public footprint mode API (for future UI / dev console)
-  state.footprintMode = FOOTPRINT_MODE_BID_ASK;
-  state.setFootprintMode = (mode) => {
-    if (typeof mode !== "number") return;
-    rebuildFootprintBuffer(gl, state.buffers, mode);
-    state.footprintMode = mode;
-  };
-
-  window.__floEngineState = state;
-
-  // Also expose a simple global helper to switch footprint mode:
-  //   0 = BID/ASK, 1 = DELTA, 2 = PROFILE
-  window.__floSetFootprintMode = (mode) => {
-    if (!window.__floEngineState || !window.__floEngineState.setFootprintMode) return;
-    window.__floEngineState.setFootprintMode(mode);
-  };
-
-  // Run the resize once to sync viewport & rebuild buffers
-  resizeCanvas();
-  window.addEventListener("resize", resizeCanvas);
-
-  function loop(timestamp) {
-    renderFrame(gl, state, timestamp);
-    requestAnimationFrame(loop);
+    const visible = getVisibleData();
+    renderer.render(visible, state);
   }
 
-  requestAnimationFrame(loop);
+  requestRender();
+
+  // -------------------------
+  // PUBLIC API
+  // -------------------------
+  return {
+    setSymbol({ symbol, assetClass, venue }) {
+      state.symbol = symbol;
+      state.assetClass = assetClass;
+      state.venue = venue;
+      requestRender();
+    },
+
+    setTimeframe(tf) {
+      state.timeframe = tf;
+      requestRender();
+    },
+
+    setData(newData) {
+      state.data = newData;
+      requestRender();
+    },
+
+    update() {
+      requestRender();
+    },
+
+    getState() {
+      return state;
+    },
+  };
 }
-/* FM-PAD:END-ENGINE-CORE-INIT */
