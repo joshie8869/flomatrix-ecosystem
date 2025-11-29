@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>FloMatrix — Prototype Candle Engine v1.0</title>
+
+  <!-- AnyChart Core + Stock Modules -->
+  <script src="../anychart-installation-package/js/anychart-core.min.js"></script>
+  <script src="../anychart-installation-package/js/anychart-stock.min.js"></script>
+
+  <style>
+    /* FM-CHART-BASE-STYLE-001 */
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #050810;
+      color: #e5f5ff;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .fm-shell {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .fm-sidebar {
+      width: 310px;
+      background: #050910;
+      border-right: 1px solid #141922;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .fm-sidebar h1 {
+      font-size: 18px;
+      margin: 0 0 4px 0;
+      color: #a6ffb5;
+    }
+
+    .fm-sidebar .fm-subtitle {
+      font-size: 11px;
+      color: #7f8ca5;
+      margin-bottom: 4px;
+    }
+
+    .fm-field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .fm-label {
+      font-size: 11px;
+      color: #9ca6c0;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .fm-select,
+    .fm-input {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 4px;
+      border: 1px solid #252b38;
+      background: #050b14;
+      color: #e5f5ff;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .fm-select:focus,
+    .fm-input:focus {
+      border-color: #26ff88;
+      box-shadow: 0 0 0 1px rgba(38, 255, 136, 0.25);
+    }
+
+    .fm-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .fm-row > * {
+      flex: 1;
+    }
+
+    .fm-tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .fm-tag {
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid #262c37;
+      font-size: 11px;
+      cursor: default;
+      background: #060911;
+      color: #9ca6c0;
+    }
+
+    .fm-tag.fm-tag-active {
+      border-color: #26ff88;
+      color: #26ff88;
+      box-shadow: 0 0 10px rgba(38, 255, 136, 0.4);
+    }
+
+    .fm-divider {
+      height: 1px;
+      background: #151923;
+      margin: 4px 0 2px;
+    }
+
+    .fm-note {
+      font-size: 11px;
+      color: #6f7c99;
+      line-height: 1.4;
+    }
+
+    .fm-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      min-height: 0;
+    }
+
+    .fm-topbar {
+      height: 40px;
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      border-bottom: 1px solid #141922;
+      background: radial-gradient(circle at top left, #0a1224, #050810);
+      gap: 16px;
+      font-size: 12px;
+    }
+
+    .fm-topbar-title {
+      font-weight: 600;
+      color: #e5f5ff;
+    }
+
+    .fm-topbar-pill {
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid #272f3d;
+      background: #050b14;
+      color: #8d9bb6;
+    }
+
+    .fm-topbar-pill span {
+      color: #26ff88;
+      font-weight: 600;
+    }
+
+    #fm-chart-container {
+      flex: 1;
+      min-height: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="fm-shell">
+    <!-- LEFT SIDEBAR -->
+    <aside class="fm-sidebar">
+      <div>
+        <h1>FloMatrix Engine</h1>
+        <div class="fm-subtitle">
+          Prototype: Candles · Time · Asset Class · Price Scale · Pan/Zoom
+        </div>
+      </div>
+
+      <!-- Asset Class -->
+      <div class="fm-field-group">
+        <label class="fm-label" for="fm-asset-class">Asset Class</label>
+        <select id="fm-asset-class" class="fm-select">
+          <option value="crypto" selected>Crypto</option>
+          <option value="forex">FX Pair</option>
+          <option value="futures">Futures</option>
+          <option value="index">Index</option>
+          <option value="equity">Equity</option>
+        </select>
+      </div>
+
+      <!-- Symbol + Exchange -->
+      <div class="fm-field-group">
+        <label class="fm-label">Symbol & Venue</label>
+        <div class="fm-row">
+          <select id="fm-symbol" class="fm-select">
+            <!-- Filled by chart.js -->
+          </select>
+          <select id="fm-venue" class="fm-select">
+            <!-- Filled by chart.js -->
+          </select>
+        </div>
+      </div>
+
+      <!-- Timeframe -->
+      <div class="fm-field-group">
+        <label class="fm-label" for="fm-timeframe">Timeframe</label>
+        <select id="fm-timeframe" class="fm-select">
+          <option value="1D">1 Day (prototype)</option>
+          <option value="5D" selected>5 Days</option>
+          <option value="1M">1 Month</option>
+          <option value="3M">3 Months</option>
+          <option value="6M">6 Months</option>
+          <option value="1Y">1 Year</option>
+          <option value="ALL">All Data</option>
+        </select>
+      </div>
+
+      <!-- Price scale mode -->
+      <div class="fm-field-group">
+        <label class="fm-label" for="fm-price-scale">Price Scale</label>
+        <select id="fm-price-scale" class="fm-select">
+          <option value="normal" selected>Normal</option>
+          <option value="log">Logarithmic</option>
+          <option value="percent">Percent</option>
+        </select>
+      </div>
+
+      <!-- Interaction hints -->
+      <div class="fm-field-group">
+        <div class="fm-label">Interaction</div>
+        <div class="fm-tag-row">
+          <span class="fm-tag fm-tag-active">Drag = Pan</span>
+          <span class="fm-tag fm-tag-active">Mouse Wheel = Zoom</span>
+          <span class="fm-tag">Shift + Drag = Range Zoom</span>
+        </div>
+        <div class="fm-note">
+          This view is running on local prototype data only. No live feeds yet.
+          Once this feels perfect, we will wire it to backend feeds
+          (Binance/dxFeed/etc.) without changing the UI layout.
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN CHART AREA -->
+    <main class="fm-main">
+      <div class="fm-topbar">
+        <div class="fm-topbar-title" id="fm-topbar-title">
+          FLOMATRIX · BTC/USDT · 5D · Prototype
+        </div>
+        <div class="fm-topbar-pill" id="fm-topbar-asset-pill">
+          Asset: <span>Crypto</span>
+        </div>
+        <div class="fm-topbar-pill" id="fm-topbar-venue-pill">
+          Venue: <span>BINANCE</span>
+        </div>
+      </div>
+      <div id="fm-chart-container"></div>
+    </main>
+  </div>
+
+  <!-- FloMatrix chart logic -->
+  <script src="./chart.js"></script>
+</body>
+</html>
