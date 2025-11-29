@@ -6,38 +6,61 @@ on:
 
 jobs:
   deploy:
-    name: Deploy to FloMatrix VPS
     runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
+    env:
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+      SSH_USER: ${{ secrets.SSH_USER }}
+      PROJECT_ROOT: ${{ secrets.PROJECT_ROOT }}
 
+    steps:
+      # 1) Checkout repo
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2) Set up SSH using the secret key
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+          # write the private key from GitHub Secrets into a file
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
 
+          # pre-accept host key to avoid interactive prompt
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      # 3) Deploy to VPS (frontend + backend)
       - name: Deploy FloMatrix (frontend + backend)
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd /var/www/flomatrix && mkdir -p /tmp/deploy"
+          echo ">>> Testing SSH connection..."
+          ssh -i ~/.ssh/id_ed25519 "$SSH_USER@$SSH_HOST" "hostname && echo 'SSH OK'"
 
-          echo "Uploading repository to VPS..."
-          scp -r ./* ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/tmp/deploy/
+          echo ">>> Creating temp deploy folder on server..."
+          ssh -i ~/.ssh/id_ed25519 "$SSH_USER@$SSH_HOST" "mkdir -p $PROJECT_ROOT/tmp_from_github"
 
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
-            echo 'Applying deployment...'
-            rm -rf /var/www/flomatrix/*
-            mv /tmp/deploy/* /var/www/flomatrix/
-            cd /var/www/flomatrix/backend
-            source venv/bin/activate
-            systemctl daemon-reload
-            systemctl restart flomatrix-backend
-            systemctl reload nginx
+          echo ">>> Uploading repo snapshot to server..."
+          scp -i ~/.ssh/id_ed25519 -r ./FloMatrix "$SSH_USER@$SSH_HOST:$PROJECT_ROOT/tmp_from_github/FloMatrix"
+
+          echo ">>> Syncing into live project directory..."
+          ssh -i ~/.ssh/id_ed25519 "$SSH_USER@$SSH_HOST" "
+            cd $PROJECT_ROOT && \
+            rm -rf FloMatrix_old && \
+            if [ -d FloMatrix ]; then mv FloMatrix FloMatrix_old; fi && \
+            mv tmp_from_github/FloMatrix ./FloMatrix && \
+            rm -rf tmp_from_github
           "
 
-      - name: Deployment Complete
-        run: echo "FloMatrix CI/CD deployment finished successfully!"
+          echo ">>> Restarting backend service..."
+          ssh -i ~/.ssh/id_ed25519 "$SSH_USER@$SSH_HOST" "
+            systemctl daemon-reload && \
+            systemctl restart flomatrix-backend && \
+            systemctl status flomatrix-backend -n 5 --no-pager || true
+          "
 
+          echo ">>> Reloading nginx..."
+          ssh -i ~/.ssh/id_ed25519 "$SSH_USER@$SSH_HOST" "
+            systemctl reload nginx || systemctl restart nginx
+          "
+
+          echo ">>> FloMatrix deploy from GitHub Actions COMPLETE."
