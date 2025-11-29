@@ -2,52 +2,47 @@ name: FloMatrix Auto-Deploy
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
 
 jobs:
   deploy:
+    name: Deploy to FloMatrix VPS
     runs-on: ubuntu-latest
 
     env:
       SSH_HOST: ${{ secrets.SSH_HOST }}
       SSH_USER: ${{ secrets.SSH_USER }}
+      PROJECT_ROOT: ${{ secrets.PROJECT_ROOT }}
 
     steps:
-      # 1) Checkout repo
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2) Set up SSH using the secret key
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
+      - name: Setup SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
-          chmod 644 ~/.ssh/known_hosts
-
-      # 3) Deploy to VPS
-           - name: Deploy FloMatrix (frontend + backend)
+      - name: Deploy FloMatrix (frontend + backend)
         run: |
           set -e
 
-          REMOTE_ROOT="${{ secrets.PROJECT_ROOT }}"
+          REMOTE_ROOT="$PROJECT_ROOT"
 
           echo ">>> Testing SSH connection..."
-          ssh -i ~/.ssh/id_ed25519 "$SSH_USER@$SSH_HOST" "hostname && echo SSH_OK"
+          ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" "hostname && echo SSH_OK"
 
           echo ">>> Remote project root: $REMOTE_ROOT"
 
           echo ">>> Creating temp deploy folder on server..."
-          ssh -i ~/.ssh/id_ed25519 "$SSH_USER@$SSH_HOST" "mkdir -p ${REMOTE_ROOT}/tmp_from_github"
+          ssh "$SSH_USER@$SSH_HOST" "mkdir -p ${REMOTE_ROOT}/tmp_from_github"
 
           echo ">>> Uploading repo snapshot to server..."
-          # NOTE: no extra quotes around the remote path here
-          scp -i ~/.ssh/id_ed25519 -r ./FloMatrix "$SSH_USER@$SSH_HOST:${REMOTE_ROOT}/tmp_from_github/FloMatrix"
+          scp -r ./FloMatrix "$SSH_USER@$SSH_HOST:${REMOTE_ROOT}/tmp_from_github/FloMatrix"
 
           echo ">>> Syncing into live project directory..."
-          ssh -i ~/.ssh/id_ed25519 "$SSH_USER@$SSH_HOST" "
+          ssh "$SSH_USER@$SSH_HOST" "
             cd ${REMOTE_ROOT} && \
             rm -rf FloMatrix_old && \
             if [ -d FloMatrix ]; then mv FloMatrix FloMatrix_old; fi && \
@@ -56,14 +51,14 @@ jobs:
           "
 
           echo ">>> Restarting backend service..."
-          ssh -i ~/.ssh/id_ed25519 "$SSH_USER@$SSH_HOST" "
+          ssh "$SSH_USER@$SSH_HOST" "
             systemctl daemon-reload && \
             systemctl restart flomatrix-backend && \
             systemctl status flomatrix-backend -n 5 --no-pager || true
           "
 
           echo ">>> Reloading nginx..."
-          ssh -i ~/.ssh/id_ed25519 "$SSH_USER@$SSH_HOST" "
+          ssh "$SSH_USER@$SSH_HOST" "
             systemctl reload nginx || systemctl restart nginx
           "
 
