@@ -19,15 +19,17 @@ export function initFloEngine(canvasId) {
   // -------------------------
   // STATE
   // -------------------------
-  let state = {
-    data: SAMPLE_OHLC,              // OHLC array [{t, o, h, l, c, v}]
-    rangeBars: 200,                 // Number of bars visible
-    offset: 0,                      // Pan offset (bars)
-    timeframe: "5m",                // default
+  const state = {
+    data: SAMPLE_OHLC,       // OHLC array [{t, o, h, l, c, v}]
+    rangeBars: 200,          // Number of bars visible
+    offset: 0,               // Pan offset (bars from right)
+    timeframe: "5m",         // default
     symbol: "BTCUSD",
     assetClass: "crypto",
     venue: "BINANCE",
     lastResize: 0,
+    viewportWidth: 0,
+    viewportHeight: 0,
   };
 
   // -------------------------
@@ -42,6 +44,34 @@ export function initFloEngine(canvasId) {
   const renderer = new FloRenderer(gl);
 
   // -------------------------
+  // RENDER LOOP (define FIRST to avoid TDZ)
+  // -------------------------
+  let renderQueued = false;
+
+  function getVisibleData() {
+    const { data, rangeBars, offset } = state;
+
+    const startIndex = Math.max(0, data.length - rangeBars - offset);
+    const endIndex = Math.max(startIndex + 1, data.length - offset);
+
+    return data.slice(startIndex, endIndex);
+  }
+
+  function requestRender() {
+    if (!renderQueued) {
+      renderQueued = true;
+      requestAnimationFrame(render);
+    }
+  }
+
+  function render() {
+    renderQueued = false;
+
+    const visible = getVisibleData();
+    renderer.render(visible, state);
+  }
+
+  // -------------------------
   // SIZING & RESIZING
   // -------------------------
   function resize() {
@@ -54,25 +84,18 @@ export function initFloEngine(canvasId) {
     gl.viewport(0, 0, canvas.width, canvas.height);
     renderer.setViewport(canvas.width, canvas.height);
 
+    state.viewportWidth = canvas.width;
+    state.viewportHeight = canvas.height;
     state.lastResize = performance.now();
+
     requestRender();
   }
 
   window.addEventListener("resize", resize);
-  resize();
 
   // -------------------------
   // COORDINATE TRANSFORMS
   // -------------------------
-  function getVisibleData() {
-    const { data, rangeBars, offset } = state;
-
-    const startIndex = Math.max(0, data.length - rangeBars - offset);
-    const endIndex = Math.max(startIndex + 1, data.length - offset);
-
-    return data.slice(startIndex, endIndex);
-  }
-
   function screenToDataX(px) {
     const bars = state.rangeBars;
     return (px / canvas.width) * bars;
@@ -123,26 +146,8 @@ export function initFloEngine(canvasId) {
     { passive: false }
   );
 
-  // -------------------------
-  // RENDER LOOP (THROTTLED)
-  // -------------------------
-  let renderQueued = false;
-
-  function requestRender() {
-    if (!renderQueued) {
-      renderQueued = true;
-      requestAnimationFrame(render);
-    }
-  }
-
-  function render() {
-    renderQueued = false;
-
-    const visible = getVisibleData();
-    renderer.render(visible, state);
-  }
-
-  requestRender();
+  // Initial sizing + first render
+  resize();
 
   // -------------------------
   // PUBLIC API
