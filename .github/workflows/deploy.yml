@@ -35,15 +35,32 @@ jobs:
 
           echo ">>> Remote project root: $REMOTE_ROOT"
 
-          echo ">>> Creating temp deploy folder on server..."
-          ssh "$SSH_USER@$SSH_HOST" "mkdir -p ${REMOTE_ROOT}/tmp_from_github"
+          echo ">>> Preparing temp deploy folder on server..."
+          ssh "$SSH_USER@$SSH_HOST" "
+            mkdir -p \"${REMOTE_ROOT}/tmp_from_github\" && \
+            rm -rf \"${REMOTE_ROOT}/tmp_from_github\"/*
+          "
 
-          echo ">>> Uploading repo snapshot to server..."
-          scp -r ./FloMatrix "$SSH_USER@$SSH_HOST:${REMOTE_ROOT}/tmp_from_github/FloMatrix"
+          echo ">>> Creating deploy archive (excluding AnyChart installer bundle)..."
+          # This archive includes the FloMatrix folder, but skips the heavy installer:
+          #   FloMatrix/anychart-installation-package/**
+          tar czf flomatrix_deploy.tgz \
+            FloMatrix \
+            --exclude='FloMatrix/anychart-installation-package'
+
+          echo ">>> Uploading deploy archive to server..."
+          scp flomatrix_deploy.tgz "$SSH_USER@$SSH_HOST:${REMOTE_ROOT}/tmp_from_github/"
+
+          echo ">>> Expanding archive on server..."
+          ssh "$SSH_USER@$SSH_HOST" "
+            cd \"${REMOTE_ROOT}/tmp_from_github\" && \
+            tar xzf flomatrix_deploy.tgz && \
+            rm -f flomatrix_deploy.tgz
+          "
 
           echo ">>> Syncing into live project directory..."
           ssh "$SSH_USER@$SSH_HOST" "
-            cd ${REMOTE_ROOT} && \
+            cd \"${REMOTE_ROOT}\" && \
             rm -rf FloMatrix_old && \
             if [ -d FloMatrix ]; then mv FloMatrix FloMatrix_old; fi && \
             mv tmp_from_github/FloMatrix ./FloMatrix && \
