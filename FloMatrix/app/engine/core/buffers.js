@@ -1,8 +1,20 @@
 // app/engine/core/buffers.js
-// FloEngine v1.5 — institutional candle geometry + grid lines
+// FloEngine v1.5 → v3.0 — institutional candle geometry + grid lines + footprint layout
+//
+// This file:
+//  - Builds candle and grid geometry (existing behavior, preserved).
+//  - Computes chart layout and price range.
+//  - Prepares shared layout fields for the footprint module.
+//  - Leaves actual footprint buffer creation to the footprint module.
+//
+// Footprint specifics (FloEngine v3):
+//  - We add fields: footprintBuffer, footprintVertexCount, footprintMode
+//  - The buffer itself is allocated & filled by rebuildFootprintBuffer(...) in footprint.js.
 
 import { SAMPLE_OHLC } from "./sample-ohlc.js";
+import { FOOTPRINT_MODE_BID_ASK } from "../modules/footprint.js";
 
+/* FM-PAD:BEGIN-BUFFERS-CORE-UTILS */
 function computePriceRange(data) {
   let min = Number.POSITIVE_INFINITY;
   let max = Number.NEGATIVE_INFINITY;
@@ -24,7 +36,9 @@ function priceToY(price, minPrice, maxPrice, top, chartHeight) {
   const y = top + chartHeight - t * chartHeight;
   return y;
 }
+/* FM-PAD:END-BUFFERS-CORE-UTILS */
 
+/* FM-PAD:BEGIN-BUFFERS-CORE-INIT */
 export function initBuffers(gl, program, getRes) {
   const { width, height } = getRes();
 
@@ -37,11 +51,11 @@ export function initBuffers(gl, program, getRes) {
   const chartHeight = Math.max(1, height - paddingTop - paddingBottom);
 
   const barCount = SAMPLE_OHLC.length;
-  const barSpacing = chartWidth / barCount;
+  const barSpacing = chartWidth / Math.max(1, barCount);
 
   // Refined proportions
-  const bodyWidthOuter = barSpacing * 0.48;         // outer body (border shell)
-  const bodyWidthInner = bodyWidthOuter * 0.78;     // inner fill body
+  const bodyWidthOuter = barSpacing * 0.48;              // outer body (border shell)
+  const bodyWidthInner = bodyWidthOuter * 0.78;          // inner fill body
   const wickWidth = Math.max(0.8, bodyWidthOuter * 0.09); // thinner, refined wick
 
   const { min: priceMin, max: priceMax } = computePriceRange(SAMPLE_OHLC);
@@ -148,6 +162,12 @@ export function initBuffers(gl, program, getRes) {
     paddingLeft,
     paddingRight,
     paddingTop,
-    paddingBottom
+    paddingBottom,
+
+    // Footprint layer (to be populated by footprint module)
+    footprintBuffer: null,
+    footprintVertexCount: 0,
+    footprintMode: FOOTPRINT_MODE_BID_ASK
   };
 }
+/* FM-PAD:END-BUFFERS-CORE-INIT */
