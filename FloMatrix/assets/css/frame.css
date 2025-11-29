@@ -15,7 +15,8 @@
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   width: 100%;
   height: 100%;
   margin: 0;
@@ -37,6 +38,7 @@ html, body {
 /* TOP BAR */
 
 .fm-topbar {
+  position: relative; /* important: dropdowns anchor to this row */
   height: 42px;
   display: flex;
   align-items: center;
@@ -44,8 +46,9 @@ html, body {
   padding: 0 14px;
   background: linear-gradient(to right, #050810 0, #050910 40%, #050810 100%);
   border-bottom: 1px solid #10151f;
-  box-shadow: 0 0 0 1px rgba(0,0,0,0.9),
-              0 8px 24px rgba(0,0,0,0.8);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.9),
+    0 8px 24px rgba(0, 0, 0, 0.8);
 }
 
 .fm-topbar-left {
@@ -64,7 +67,7 @@ html, body {
   width: 24px;
   height: 24px;
   border-radius: 4px;
-  box-shadow: 0 0 16px rgba(46,242,126,0.4);
+  box-shadow: 0 0 16px rgba(46, 242, 126, 0.4);
 }
 
 .fm-logo-text-block {
@@ -94,7 +97,7 @@ html, body {
   font-weight: 600;
   letter-spacing: 0.03em;
   box-shadow: 0 0 18px rgba(46, 242, 126, 0.45);
-  border: 1px solid rgba(0,0,0,0.7);
+  border: 1px solid rgba(0, 0, 0, 0.7);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -143,28 +146,33 @@ html, body {
   color: var(--fm-text-main);
 }
 
-.fm-menu-item:hover .fm-menu-dropdown {
-  opacity: 1;
-  pointer-events: auto;
-  transform: translateY(0);
-}
-
+/* BIG FIX: dropdown hugs the bottom of the item, no gaps */
 .fm-menu-dropdown {
   position: absolute;
-  top: 130%;
+  top: 100%; /* directly below menu item */
   left: 0;
+  margin-top: 4px; /* tiny visual offset, still within hover zone */
   min-width: 210px;
   background: radial-gradient(circle at top, #111727 0, #060811 55%, #010208 100%);
   border-radius: 8px;
   border: 1px solid rgba(46, 242, 126, 0.12);
-  box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
   padding: 8px 0;
   opacity: 0;
   pointer-events: none;
-  transform: translateY(-4px);
-  transition: opacity 120ms ease-out, transform 120ms ease-out;
+  transform: translateY(4px);
+  transition:
+    opacity 120ms ease-out,
+    transform 120ms ease-out;
   z-index: 40;
   backdrop-filter: blur(12px);
+}
+
+/* As long as cursor is over the item OR dropdown, keep it open */
+.fm-menu-item:hover .fm-menu-dropdown {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
 }
 
 .fm-menu-section-title {
@@ -200,7 +208,7 @@ html, body {
 .fm-menu-separator {
   height: 1px;
   margin: 4px 8px;
-  background: radial-gradient(circle at left, rgba(46,242,126,0.4), rgba(255,255,255,0.02));
+  background: radial-gradient(circle at left, rgba(46, 242, 126, 0.4), rgba(255, 255, 255, 0.02));
   opacity: 0.5;
 }
 
@@ -298,12 +306,14 @@ html, body {
   padding: 3px 7px;
   border-radius: 6px;
   background: rgba(3, 7, 16, 0.98);
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   color: var(--fm-text-muted);
   pointer-events: none;
   opacity: 0;
   transform: translateX(-2px);
-  transition: opacity 100ms ease-out, transform 100ms ease-out;
+  transition:
+    opacity 100ms ease-out,
+    transform 100ms ease-out;
 }
 
 .fm-tool-button:hover .fm-tool-label {
@@ -321,7 +331,7 @@ html, body {
   background: radial-gradient(circle at top, #151d32 0, #050814 55%, #02030a 100%);
   border-radius: 10px;
   border: 1px solid rgba(46, 242, 126, 0.35);
-  box-shadow: 0 18px 40px rgba(0,0,0,0.85);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.85);
   padding: 8px 0;
   font-size: 11px;
   z-index: 30;
@@ -355,13 +365,13 @@ html, body {
 }
 
 .fm-left-drawer-item:hover {
-  background: rgba(46,242,126,0.12);
+  background: rgba(46, 242, 126, 0.12);
 }
 
 .fm-left-drawer-separator {
   height: 1px;
   margin: 6px 8px;
-  background: linear-gradient(to right, rgba(46, 242, 126, 0.6), rgba(255,255,255,0.03));
+  background: linear-gradient(to right, rgba(46, 242, 126, 0.6), rgba(255, 255, 255, 0.03));
   opacity: 0.5;
 }
 
@@ -401,7 +411,7 @@ html, body {
 }
 
 #flo-overlay-canvas {
-  pointer-events: none; /* turned on by JS only when using drawing tools */
+  pointer-events: none; /* JS enables for drawing tools only */
 }
 
 /* Price rail */
@@ -450,7 +460,7 @@ html, body {
   font-weight: 500;
   padding: 1px 5px;
   border-radius: 999px;
-  background: rgba(0,0,0,0.55);
+  background: rgba(0, 0, 0, 0.55);
   color: #8cf7b7;
 }
 
