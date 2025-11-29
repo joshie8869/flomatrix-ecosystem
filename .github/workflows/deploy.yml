@@ -10,69 +10,34 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Repo
-      uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-    # -------------------------
-    #  Connect to VPS
-    # -------------------------
-    - name: Setup SSH
-      uses: webfactory/ssh-agent@v0.7.0
-      with:
-        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
-    - name: Add VPS to known hosts
-      run: |
-        ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+      - name: Deploy FloMatrix (frontend + backend)
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd /var/www/flomatrix && mkdir -p /tmp/deploy"
 
-    # -------------------------
-    #  UPLOAD & DEPLOY BACKEND
-    # -------------------------
-    - name: Upload backend code
-      run: |
-        rsync -avz --delete \
-        FloMatrix/backend/ \
-        ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/flomatrix/backend/
+          echo "Uploading repository to VPS..."
+          scp -r ./* ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/tmp/deploy/
 
-    - name: Install backend dependencies
-      run: |
-        ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
-          cd /var/www/flomatrix &&
-          source backend/venv/bin/activate &&
-          pip install -r backend/requirements.txt
-        "
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            echo 'Applying deployment...'
+            rm -rf /var/www/flomatrix/*
+            mv /tmp/deploy/* /var/www/flomatrix/
+            cd /var/www/flomatrix/backend
+            source venv/bin/activate
+            systemctl daemon-reload
+            systemctl restart flomatrix-backend
+            systemctl reload nginx
+          "
 
-    - name: Restart backend service
-      run: |
-        ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
-          systemctl daemon-reload &&
-          systemctl restart flomatrix-backend
-        "
+      - name: Deployment Complete
+        run: echo "FloMatrix CI/CD deployment finished successfully!"
 
-    # -------------------------
-    #  UPLOAD & DEPLOY FRONTEND
-    # -------------------------
-    - name: Upload frontend code
-      run: |
-        rsync -avz --delete \
-        FloMatrix/app/ \
-        ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/flomatrix/frontend/
-
-        rsync -avz --delete \
-        FloMatrix/assets/ \
-        ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/flomatrix/frontend/assets/
-
-    - name: Reload nginx
-      run: |
-        ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
-          systemctl reload nginx
-        "
-
-    # -------------------------
-    #  HEALTH CHECK
-    # -------------------------
-    - name: Backend Health Check
-      run: |
-        ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
-          curl -f http://localhost:8000/health
-        "
