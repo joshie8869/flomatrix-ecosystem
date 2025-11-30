@@ -1,4 +1,4 @@
-/* FloMatrix AI Builder UI — Dark Institutional Panel */
+/* FloMatrix AI Builder UI — Dark Institutional Panel (Movable + Resizable) */
 
 :root {
   --fm-bg: #05070d;
@@ -62,7 +62,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 22px;
+  padding: 10px 22px;
   border-bottom: 1px solid var(--fm-border-soft);
   background: linear-gradient(
     90deg,
@@ -76,21 +76,25 @@ body {
 .fm-header-left {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
 }
 
-.fm-logo-mark {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+.fm-logo-wrapper {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
   background: radial-gradient(circle at 30% 0, #2ef27e, #0f1a25 55%, #05070d 100%);
   box-shadow: var(--fm-shadow-neon);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 800;
-  font-size: 16px;
-  letter-spacing: 0.06em;
+  overflow: hidden;
+}
+
+.fm-logo-img {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
 }
 
 .fm-header-text h1 {
@@ -109,6 +113,12 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.fm-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* Status chip */
@@ -142,7 +152,7 @@ body {
   box-shadow: 0 0 10px rgba(255, 155, 86, 0.6);
 }
 
-/* Buttons */
+/* Buttons & selects */
 
 .fm-btn {
   border-radius: var(--fm-radius-pill);
@@ -207,14 +217,60 @@ body {
   box-shadow: none;
 }
 
-/* Main layout */
+.fm-select {
+  height: 32px;
+  border-radius: var(--fm-radius-pill);
+  border: 1px solid var(--fm-border-soft);
+  background: rgba(5, 8, 14, 0.95);
+  color: var(--fm-text-soft);
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+/* Main layout: columns + resizers */
 
 .fm-main-layout {
   flex: 1;
-  display: grid;
-  grid-template-columns: 26% 38% 36%;
-  gap: 12px;
+  display: flex;
+  align-items: stretch;
   padding: 10px 12px 10px;
+  gap: 0;
+}
+
+.fm-column {
+  flex: 1 1 auto;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.fm-column-resizer {
+  width: 6px;
+  cursor: col-resize;
+  position: relative;
+}
+
+.fm-column-resizer::before {
+  content: "";
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 1px;
+  right: 1px;
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    rgba(90, 75, 255, 0.15),
+    rgba(46, 242, 126, 0.25)
+  );
+  opacity: 0.45;
+  transition: opacity 0.12s ease-out, box-shadow 0.12s ease-out;
+}
+
+.fm-column-resizer:hover::before {
+  opacity: 0.9;
+  box-shadow: 0 0 14px rgba(46, 242, 126, 0.8);
 }
 
 /* Panels */
@@ -272,6 +328,12 @@ body {
 
 .fm-panel-subheader input::placeholder {
   color: var(--fm-text-muted);
+}
+
+/* “Drag” cursor when in layout edit mode */
+
+.fm-layout-edit-on .fm-drag-handle {
+  cursor: move;
 }
 
 /* Pills */
@@ -424,6 +486,41 @@ body {
   border-bottom: 1px solid var(--fm-border-soft);
   display: flex;
   gap: 8px;
+}
+
+/* Quick tools */
+
+.fm-subpanel-inline {
+  margin: 8px 10px 0;
+}
+
+.fm-quick-tools {
+  display: grid;
+  grid-template-columns: 2.2fr 1.2fr;
+  gap: 10px;
+  padding: 8px 2px 8px;
+}
+
+.fm-quick-tool label {
+  display: block;
+  font-size: 11px;
+  color: var(--fm-text-muted);
+  margin-bottom: 3px;
+}
+
+.fm-quick-input-row {
+  display: flex;
+  gap: 6px;
+}
+
+.fm-quick-input-row input {
+  flex: 1;
+  padding: 6px 8px;
+  border-radius: var(--fm-radius-md);
+  border: 1px solid var(--fm-border-soft);
+  background: rgba(3, 5, 11, 0.9);
+  color: var(--fm-text-main);
+  font-size: 12px;
 }
 
 /* Timeline */
@@ -595,33 +692,21 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* Responsive-ish for smaller widths */
+/* Responsive tweaks */
 
 @media (max-width: 1200px) {
   .fm-main-layout {
-    grid-template-columns: 32% 68%;
-    grid-template-rows: 55% 45%;
-    grid-template-areas:
-      "left center"
-      "left right";
+    flex-direction: column;
   }
-
-  .fm-panel-left {
-    grid-area: left;
-  }
-
-  .fm-panel-center {
-    grid-area: center;
-  }
-
-  .fm-panel-right {
-    grid-area: right;
+  .fm-column-resizer {
+    display: none;
   }
 }
 
 @media (max-width: 900px) {
-  .fm-main-layout {
-    grid-template-columns: 1fr;
-    grid-auto-rows: minmax(180px, auto);
+  .fm-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
 }

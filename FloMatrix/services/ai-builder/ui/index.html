@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>FloMatrix AI Builder Control Panel</title>
+  <title>FloMatrix — AI Builder Control Panel</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="assets/css/style.css" />
 </head>
@@ -10,7 +10,13 @@
   <div id="app-root">
     <header class="fm-header">
       <div class="fm-header-left">
-        <div class="fm-logo-mark">FM</div>
+        <div class="fm-logo-wrapper">
+          <img
+            src="assets/img/flomatrix-logo.png"
+            alt="FloMatrix"
+            class="fm-logo-img"
+          />
+        </div>
         <div class="fm-header-text">
           <h1>FloMatrix — AI Builder Control Panel</h1>
           <p>Mode C • Institutional AI Repair Pipeline</p>
@@ -21,104 +27,194 @@
           <span class="dot dot-off"></span>
           <span id="backend-status-text">Checking backend…</span>
         </div>
-        <button id="btn-refresh-all" class="fm-btn fm-btn-primary">
-          Refresh All
-        </button>
+
+        <div class="fm-header-controls">
+          <button id="btn-toggle-auto-refresh" class="fm-btn fm-btn-ghost">
+            Auto: ON (15s)
+          </button>
+          <select id="auto-refresh-select" class="fm-select">
+            <option value="10000">10s</option>
+            <option value="15000" selected>15s</option>
+            <option value="30000">30s</option>
+            <option value="60000">60s</option>
+          </select>
+          <button id="btn-layout-mode" class="fm-btn fm-btn-ghost">
+            Layout Edit: OFF
+          </button>
+          <button id="btn-refresh-all" class="fm-btn fm-btn-primary">
+            Refresh All
+          </button>
+        </div>
       </div>
     </header>
 
-    <main class="fm-main-layout">
-      <!-- LEFT: JOB LIST -->
-      <section class="fm-panel fm-panel-left">
-        <div class="fm-panel-header">
-          <h2>Job Queue</h2>
-          <div class="fm-panel-header-actions">
-            <button id="btn-refresh-jobs" class="fm-btn fm-btn-ghost">
-              Reload Jobs
-            </button>
-            <span class="fm-pill" id="jobs-count-pill">0 jobs</span>
+    <main class="fm-main-layout" id="fm-main-layout">
+      <!-- COLUMN: JOBS -->
+      <div class="fm-column" data-col-id="jobs">
+        <section class="fm-panel fm-panel-left">
+          <div class="fm-panel-header fm-drag-handle">
+            <h2>Job Queue</h2>
+            <div class="fm-panel-header-actions">
+              <button id="btn-refresh-jobs" class="fm-btn fm-btn-ghost">
+                Reload Jobs
+              </button>
+              <span class="fm-pill" id="jobs-count-pill">0 jobs</span>
+            </div>
           </div>
-        </div>
 
-        <div class="fm-panel-subheader">
-          <input
-            id="job-search-input"
-            type="text"
-            placeholder="Filter by id, status, repo, path…"
-          />
-        </div>
-
-        <div id="jobs-list" class="fm-jobs-list">
-          <!-- Populated by JS -->
-        </div>
-      </section>
-
-      <!-- CENTER: JOB DETAILS + ACTIONS -->
-      <section class="fm-panel fm-panel-center">
-        <div class="fm-panel-header">
-          <h2>Job Details</h2>
-          <div class="fm-panel-header-actions">
-            <span id="selected-job-id-label" class="fm-pill fm-pill-muted">
-              No job selected
-            </span>
+          <div class="fm-panel-subheader">
+            <input
+              id="job-search-input"
+              type="text"
+              placeholder="Filter by id, status, repo, path…"
+            />
           </div>
-        </div>
 
-        <div class="fm-job-meta-grid" id="job-meta-grid">
-          <!-- Meta cards populated by JS -->
-        </div>
-
-        <div class="fm-job-actions">
-          <button id="btn-approve-job" class="fm-btn fm-btn-success" disabled>
-            ✅ Approve Patch
-          </button>
-          <button id="btn-reject-job" class="fm-btn fm-btn-danger" disabled>
-            ❌ Reject Patch
-          </button>
-          <button id="btn-reload-selected" class="fm-btn fm-btn-ghost" disabled>
-            🔄 Reload Selected
-          </button>
-        </div>
-
-        <div class="fm-panel fm-subpanel">
-          <div class="fm-subpanel-header">
-            <h3>Job Timeline</h3>
-          </div>
-          <div id="job-timeline" class="fm-timeline">
+          <div class="fm-jobs-list" id="jobs-list">
             <!-- Populated by JS -->
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
 
-      <!-- RIGHT: LOGS + PATCH DIFF -->
-      <section class="fm-panel fm-panel-right">
-        <div class="fm-panel-tabs">
-          <button
-            class="fm-tab-button fm-tab-active"
-            data-tab="logs"
-            id="tab-logs-btn"
-          >
-            Logs
-          </button>
-          <button class="fm-tab-button" data-tab="diff" id="tab-diff-btn">
-            Patch Diff
-          </button>
-        </div>
+      <!-- RESIZER BETWEEN JOBS + DETAILS -->
+      <div
+        class="fm-column-resizer"
+        data-resizer-index="0"
+        title="Drag to resize columns"
+      ></div>
 
-        <div class="fm-tab-content-wrapper">
-          <div id="tab-logs" class="fm-tab-content fm-tab-active">
-            <pre id="logs-output" class="fm-log-output">
+      <!-- COLUMN: DETAILS -->
+      <div class="fm-column" data-col-id="details">
+        <section class="fm-panel fm-panel-center">
+          <div class="fm-panel-header fm-drag-handle">
+            <h2>Job Details</h2>
+            <div class="fm-panel-header-actions">
+              <span
+                id="selected-job-id-label"
+                class="fm-pill fm-pill-muted"
+              >
+                No job selected
+              </span>
+            </div>
+          </div>
+
+          <div class="fm-job-meta-grid" id="job-meta-grid">
+            <!-- Meta cards populated by JS -->
+          </div>
+
+          <div class="fm-job-actions">
+            <button
+              id="btn-approve-job"
+              class="fm-btn fm-btn-success"
+              disabled
+            >
+              ✅ Approve Patch
+            </button>
+            <button
+              id="btn-reject-job"
+              class="fm-btn fm-btn-danger"
+              disabled
+            >
+              ❌ Reject Patch
+            </button>
+            <button
+              id="btn-reload-selected"
+              class="fm-btn fm-btn-ghost"
+              disabled
+            >
+              🔄 Reload Selected
+            </button>
+          </div>
+
+          <!-- QUICK TOOLS -->
+          <div class="fm-subpanel fm-subpanel-inline">
+            <div class="fm-subpanel-header">
+              <h3>Quick Tools</h3>
+            </div>
+            <div class="fm-quick-tools">
+              <div class="fm-quick-tool">
+                <label for="quick-job-id-input">Load Job by ID</label>
+                <div class="fm-quick-input-row">
+                  <input
+                    id="quick-job-id-input"
+                    type="text"
+                    placeholder="Enter job id…"
+                  />
+                  <button
+                    id="btn-quick-load-job"
+                    class="fm-btn fm-btn-ghost"
+                  >
+                    Load
+                  </button>
+                </div>
+              </div>
+
+              <div class="fm-quick-tool">
+                <label for="status-filter-select">Status Filter</label>
+                <select id="status-filter-select" class="fm-select">
+                  <option value="">All statuses</option>
+                  <option value="queued">Queued / Pending</option>
+                  <option value="running">Running</option>
+                  <option value="completed">Completed</option>
+                  <option value="error">Error / Failed</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="fm-panel fm-subpanel">
+            <div class="fm-subpanel-header">
+              <h3>Job Timeline</h3>
+            </div>
+            <div id="job-timeline" class="fm-timeline">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- RESIZER BETWEEN DETAILS + LOGS -->
+      <div
+        class="fm-column-resizer"
+        data-resizer-index="1"
+        title="Drag to resize columns"
+      ></div>
+
+      <!-- COLUMN: LOGS/DIFF -->
+      <div class="fm-column" data-col-id="logs">
+        <section class="fm-panel fm-panel-right">
+          <div class="fm-panel-tabs fm-drag-handle">
+            <button
+              class="fm-tab-button fm-tab-active"
+              data-tab="logs"
+              id="tab-logs-btn"
+            >
+              Logs
+            </button>
+            <button
+              class="fm-tab-button"
+              data-tab="diff"
+              id="tab-diff-btn"
+            >
+              Patch Diff
+            </button>
+          </div>
+
+          <div class="fm-tab-content-wrapper">
+            <div id="tab-logs" class="fm-tab-content fm-tab-active">
+              <pre id="logs-output" class="fm-log-output">
 No job selected yet.
-            </pre>
-          </div>
+              </pre>
+            </div>
 
-          <div id="tab-diff" class="fm-tab-content">
-            <pre id="diff-output" class="fm-diff-output">
+            <div id="tab-diff" class="fm-tab-content">
+              <pre id="diff-output" class="fm-diff-output">
 No patch diff loaded yet.
-            </pre>
+              </pre>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </main>
 
     <footer class="fm-footer">

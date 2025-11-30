@@ -9,7 +9,7 @@
 //   GET  /api/jobs/logs/{id}     -> text logs    (optional, we handle 404)
 //   GET  /api/jobs/diff/{id}     -> unified diff (optional, we handle 404)
 //
-// If any URL is different, just adjust API_ROUTES below.
+// If any URL is different, adjust API_ROUTES accordingly.
 
 const API_BASE = "http://localhost:9000";
 
@@ -20,15 +20,21 @@ const API_ROUTES = {
   reject: (id) => `${API_BASE}/api/jobs/reject/${encodeURIComponent(id)}`,
   logs: (id) => `${API_BASE}/api/jobs/logs/${encodeURIComponent(id)}`,
   diff: (id) => `${API_BASE}/api/jobs/diff/${encodeURIComponent(id)}`,
-  // If you create a health endpoint, plug it here
-  health: () => `${API_BASE}/api/jobs`, // quick GET to check backend is alive
+  health: () => `${API_BASE}/api/jobs`,
 };
+
+const LAYOUT_STORAGE_KEY = "fm_ai_builder_layout";
+const WIDTHS_STORAGE_KEY = "fm_ai_builder_column_widths";
 
 const state = {
   jobs: [],
   selectedJobId: null,
   autoRefreshMs: 15000,
+  autoRefreshEnabled: true,
   autoRefreshTimer: null,
+  layoutEdit: false,
+  columnWidths: [26, 38, 36], // percentages
+  columnOrder: ["jobs", "details", "logs"],
 };
 
 // DOM refs
@@ -47,9 +53,16 @@ const btnRefreshJobs = document.getElementById("btn-refresh-jobs");
 const btnRefreshAll = document.getElementById("btn-refresh-all");
 const logsOutput = document.getElementById("logs-output");
 const diffOutput = document.getElementById("diff-output");
-const autoRefreshIndicator = document.getElementById(
-  "auto-refresh-indicator"
+const autoRefreshIndicator = document.getElementById("auto-refresh-indicator");
+const btnToggleAutoRefresh = document.getElementById(
+  "btn-toggle-auto-refresh"
 );
+const autoRefreshSelect = document.getElementById("auto-refresh-select");
+const btnLayoutMode = document.getElementById("btn-layout-mode");
+const mainLayout = document.getElementById("fm-main-layout");
+const quickJobIdInput = document.getElementById("quick-job-id-input");
+const btnQuickLoadJob = document.getElementById("btn-quick-load-job");
+const statusFilterSelect = document.getElementById("status-filter-select");
 
 // Tabs
 const tabLogsBtn = document.getElementById("tab-logs-btn");
@@ -109,7 +122,6 @@ function clearSelectionUI() {
 
 function formatTimestamp(ts) {
   if (!ts) return "—";
-  // Attempt to format ISO timestamp
   try {
     const d = new Date(ts);
     if (Number.isNaN(d.getTime())) return ts;
@@ -178,8 +190,222 @@ function renderDiffText(raw) {
   diffOutput.textContent = "";
   styledLines.forEach((span, idx) => {
     diffOutput.appendChild(span);
-    if (idx < styledLines.length - 1) diffOutput.appendChild(document.createTextNode("\n"));
+    if (idx < styledLines.length - 1)
+      diffOutput.appendChild(document.createTextNode("\n"));
   });
+}
+
+// -------------------------
+// Layout (column order + width)
+// -------------------------
+
+function loadLayoutFromStorage() {
+  try {
+    const layoutRaw = localStorage.getItem(LAYOUT_STORAGE_KEY);
+    if (layoutRaw) {
+      const parsed = JSON.parse(layoutRaw);
+      if (Array.isArray(parsed) && parsed.length === 3) {
+        state.columnOrder = parsed;
+      }
+    }
+
+    const widthsRaw = localStorage.getItem(WIDTHS_STORAGE_KEY);
+    if (widthsRaw) {
+      const parsed = JSON.parse(widthsRaw);
+      if (
+        Array.isArray(parsed) &&
+        parsed.length === 3 &&
+        parsed.every((n) => typeof n === "number")
+      ) {
+        state.columnWidths = parsed;
+      }
+    }
+  } catch (err) {
+    console.warn("Failed to load layout from storage:", err);
+  }
+}
+
+function saveLayoutToStorage() {
+  try {
+    localStorage.setItem(
+      LAYOUT_STORAGE_KEY,
+      JSON.stringify(state.columnOrder)
+    );
+    localStorage.setItem(
+      WIDTHS_STORAGE_KEY,
+      JSON.stringify(state.columnWidths)
+    );
+  } catch (err) {
+    console.warn("Failed to save layout to storage:", err);
+  }
+}
+
+function applyColumnOrder() {
+  const columns = {};
+  mainLayout.querySelectorAll(".fm-column").forEach((col) => {
+    const id = col.getAttribute("data-col-id");
+    if (id) columns[id] = col;
+  });
+
+  // Existing resizers
+  const resizers = Array.from(
+    mainLayout.querySelectorAll(".fm-column-resizer")
+  );
+
+  mainLayout.innerHTML = "";
+
+  const order = state.columnOrder;
+  for (let i = 0; i < order.length; i++) {
+    const colId = order[i];
+    const col = columns[colId];
+    if (!col) continue;
+
+    mainLayout.appendChild(col);
+    if (i < order.length - 1) {
+      const resizer = resizers[i] || document.createElement("div");
+      resizer.className = "fm-column-resizer";
+      resizer.setAttribute("data-resizer-index", String(i));
+      resizer.title = "Drag to resize columns";
+      mainLayout.appendChild(resizer);
+    }
+  }
+}
+
+function applyColumnWidths() {
+  const cols = mainLayout.querySelectorAll(".fm-column");
+  cols.forEach((col, index) => {
+    const widthPct = state.columnWidths[index] || 33;
+    col.style.flexBasis = `${widthPct}%`;
+  });
+}
+
+function initColumnResizers() {
+  let isResizing = false;
+  let startX = 0;
+  let startWidths = [];
+  let activeIndex = -1;
+
+  function onMouseMove(e) {
+    if (!isResizing) return;
+
+    const deltaX = e.clientX - startX;
+    const rect = mainLayout.getBoundingClientRect();
+    const totalWidth = rect.width;
+
+    const deltaPct = (deltaX / totalWidth) * 100;
+
+    const leftIdx = activeIndex;
+    const rightIdx = activeIndex + 1;
+
+    let leftWidth = startWidths[leftIdx] + deltaPct;
+    let rightWidth = startWidths[rightIdx] - deltaPct;
+
+    // clamp to reasonable min width
+    leftWidth = Math.max(15, Math.min(70, leftWidth));
+    rightWidth = Math.max(15, Math.min(70, rightWidth));
+
+    // adjust other columns to keep total ~100
+    const otherIdx = [0, 1, 2].filter(
+      (i) => i !== leftIdx && i !== rightIdx
+    )[0];
+    const remainingWidth = 100 - leftWidth - rightWidth;
+    const originalOther = startWidths[otherIdx];
+    const factor = remainingWidth / originalOther;
+    const newOther = originalOther * factor;
+
+    state.columnWidths[leftIdx] = leftWidth;
+    state.columnWidths[rightIdx] = rightWidth;
+    state.columnWidths[otherIdx] = newOther;
+
+    applyColumnWidths();
+  }
+
+  function onMouseUp() {
+    if (!isResizing) return;
+    isResizing = false;
+    document.removeEventListener("mousemove", onMouseMove);
+    document.removeEventListener("mouseup", onMouseUp);
+    saveLayoutToStorage();
+  }
+
+  mainLayout.addEventListener("mousedown", (e) => {
+    const resizer = e.target.closest(".fm-column-resizer");
+    if (!resizer) return;
+
+    isResizing = true;
+    activeIndex = Number(resizer.getAttribute("data-resizer-index")) || 0;
+    startX = e.clientX;
+    startWidths = [...state.columnWidths];
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+  });
+}
+
+function enableLayoutEditMode() {
+  state.layoutEdit = true;
+  document.body.classList.add("fm-layout-edit-on");
+  btnLayoutMode.textContent = "Layout Edit: ON";
+
+  mainLayout
+    .querySelectorAll(".fm-column")
+    .forEach((col) => (col.draggable = true));
+
+  mainLayout.addEventListener("dragstart", onColumnDragStart);
+  mainLayout.addEventListener("dragover", onColumnDragOver);
+  mainLayout.addEventListener("drop", onColumnDrop);
+}
+
+function disableLayoutEditMode() {
+  state.layoutEdit = false;
+  document.body.classList.remove("fm-layout-edit-on");
+  btnLayoutMode.textContent = "Layout Edit: OFF";
+
+  mainLayout
+    .querySelectorAll(".fm-column")
+    .forEach((col) => (col.draggable = false));
+
+  mainLayout.removeEventListener("dragstart", onColumnDragStart);
+  mainLayout.removeEventListener("dragover", onColumnDragOver);
+  mainLayout.removeEventListener("drop", onColumnDrop);
+}
+
+let dragSourceId = null;
+
+function onColumnDragStart(e) {
+  const col = e.target.closest(".fm-column");
+  if (!col) return;
+  dragSourceId = col.getAttribute("data-col-id");
+  e.dataTransfer.effectAllowed = "move";
+}
+
+function onColumnDragOver(e) {
+  if (!dragSourceId) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = "move";
+}
+
+function onColumnDrop(e) {
+  e.preventDefault();
+  const targetCol = e.target.closest(".fm-column");
+  if (!targetCol || !dragSourceId) return;
+
+  const targetId = targetCol.getAttribute("data-col-id");
+  if (!targetId || targetId === dragSourceId) return;
+
+  const order = [...state.columnOrder];
+  const fromIndex = order.indexOf(dragSourceId);
+  const toIndex = order.indexOf(targetId);
+  if (fromIndex === -1 || toIndex === -1) return;
+
+  order.splice(fromIndex, 1);
+  order.splice(toIndex, 0, dragSourceId);
+  state.columnOrder = order;
+
+  applyColumnOrder();
+  applyColumnWidths();
+  saveLayoutToStorage();
+  dragSourceId = null;
 }
 
 // -------------------------
@@ -187,12 +413,30 @@ function renderDiffText(raw) {
 // -------------------------
 
 function renderJobsList() {
-  const filter = (jobSearchInput.value || "").toLowerCase();
+  const textFilter = (jobSearchInput.value || "").toLowerCase();
+  const statusFilter = (statusFilterSelect.value || "").toLowerCase();
 
   jobsListEl.innerHTML = "";
 
   const jobsToRender = state.jobs.filter((job) => {
-    if (!filter) return true;
+    // status filter
+    if (statusFilter) {
+      const s = (job.status || "").toLowerCase();
+      if (statusFilter === "queued" && !s.includes("queue") && !s.includes("pend"))
+        return false;
+      if (statusFilter === "running" && !s.includes("run")) return false;
+      if (statusFilter === "completed" && !s.includes("comp") && !s.includes("done"))
+        return false;
+      if (
+        statusFilter === "error" &&
+        !s.includes("error") &&
+        !s.includes("fail")
+      )
+        return false;
+    }
+
+    // text filter
+    if (!textFilter) return true;
     const combined =
       (job.id || "") +
       " " +
@@ -203,7 +447,7 @@ function renderJobsList() {
       (job.path || "") +
       " " +
       (job.summary || "");
-    return combined.toLowerCase().includes(filter);
+    return combined.toLowerCase().includes(textFilter);
   });
 
   jobsCountPill.textContent = `${jobsToRender.length} job${
@@ -214,7 +458,7 @@ function renderJobsList() {
     const empty = document.createElement("div");
     empty.className = "fm-job-row";
     empty.innerHTML =
-      '<div class="fm-job-row-main">No jobs found.</div><div class="fm-job-row-sub">Create or trigger a job from your AI Builder backend.</div>';
+      '<div class="fm-job-row-main">Unable to load jobs.</div><div class="fm-job-row-sub">Check that the AI Builder backend is running on localhost:9000, or that /api/jobs is implemented.</div>';
     jobsListEl.appendChild(empty);
     return;
   }
@@ -289,25 +533,21 @@ async function fetchJobs() {
 
     if (!res.ok) {
       if (res.status === 404) {
-        // Backend might not have /api/jobs yet — degrade gracefully
-        jobsListEl.innerHTML =
-          '<div class="fm-job-row"><div class="fm-job-row-main">Jobs list endpoint not found.</div><div class="fm-job-row-sub">You can still view a job by ID using the status endpoint.</div></div>';
-        jobsCountPill.textContent = "0 jobs";
+        state.jobs = [];
+        renderJobsList();
         return;
       }
       throw new Error(`HTTP ${res.status}`);
     }
 
     const data = await res.json();
-    // Expect either { jobs: [...] } or [...]
     const jobs = Array.isArray(data) ? data : data.jobs || [];
     state.jobs = jobs;
     renderJobsList();
   } catch (err) {
     console.error("Failed to fetch jobs:", err);
-    jobsListEl.innerHTML =
-      '<div class="fm-job-row"><div class="fm-job-row-main">Unable to load jobs.</div><div class="fm-job-row-sub">Check that the AI Builder backend is running on localhost:9000.</div></div>';
-    jobsCountPill.textContent = "0 jobs";
+    state.jobs = [];
+    renderJobsList();
   }
 }
 
@@ -334,7 +574,11 @@ async function selectJob(jobId) {
   btnRejectJob.disabled = false;
   btnReloadSelected.disabled = false;
 
-  await Promise.all([fetchJobStatus(jobId), fetchJobLogs(jobId), fetchJobDiff(jobId)]);
+  await Promise.all([
+    fetchJobStatus(jobId),
+    fetchJobLogs(jobId),
+    fetchJobDiff(jobId),
+  ]);
 }
 
 async function fetchJobStatus(jobId) {
@@ -503,7 +747,6 @@ async function postJobAction(kind) {
       (isApprove ? "✅ Job approved.\n\n" : "❌ Job rejected.\n\n") +
       resultText;
 
-    // Refresh the job status
     await fetchJobStatus(jobId);
     await fetchJobs();
   } catch (err) {
@@ -537,11 +780,21 @@ function activateTab(which) {
 // Auto-refresh
 // -------------------------
 
-function startAutoRefresh() {
-  stopAutoRefresh();
-  autoRefreshIndicator.textContent = `Auto-refresh: ON (${Math.round(
+function updateAutoRefreshIndicator() {
+  const onOff = state.autoRefreshEnabled ? "ON" : "OFF";
+  autoRefreshIndicator.textContent = `Auto-refresh: ${onOff} (${Math.round(
     state.autoRefreshMs / 1000
   )}s)`;
+  btnToggleAutoRefresh.textContent = `Auto: ${onOff} (${Math.round(
+    state.autoRefreshMs / 1000
+  )}s)`;
+}
+
+function startAutoRefresh() {
+  stopAutoRefresh();
+  if (!state.autoRefreshEnabled) return;
+
+  updateAutoRefreshIndicator();
 
   state.autoRefreshTimer = setInterval(async () => {
     await fetchJobs();
@@ -564,6 +817,10 @@ function stopAutoRefresh() {
 
 function wireEvents() {
   jobSearchInput.addEventListener("input", () => {
+    renderJobsList();
+  });
+
+  statusFilterSelect.addEventListener("change", () => {
     renderJobsList();
   });
 
@@ -592,6 +849,42 @@ function wireEvents() {
 
   tabLogsBtn.addEventListener("click", () => activateTab("logs"));
   tabDiffBtn.addEventListener("click", () => activateTab("diff"));
+
+  btnToggleAutoRefresh.addEventListener("click", () => {
+    state.autoRefreshEnabled = !state.autoRefreshEnabled;
+    updateAutoRefreshIndicator();
+    if (state.autoRefreshEnabled) startAutoRefresh();
+    else stopAutoRefresh();
+  });
+
+  autoRefreshSelect.addEventListener("change", () => {
+    const val = Number(autoRefreshSelect.value) || 15000;
+    state.autoRefreshMs = val;
+    if (state.autoRefreshEnabled) startAutoRefresh();
+    else updateAutoRefreshIndicator();
+  });
+
+  btnLayoutMode.addEventListener("click", () => {
+    if (state.layoutEdit) {
+      disableLayoutEditMode();
+    } else {
+      enableLayoutEditMode();
+    }
+  });
+
+  btnQuickLoadJob.addEventListener("click", async () => {
+    const id = (quickJobIdInput.value || "").trim();
+    if (!id) return;
+    await selectJob(id);
+  });
+
+  quickJobIdInput.addEventListener("keyup", async (e) => {
+    if (e.key === "Enter") {
+      const id = (quickJobIdInput.value || "").trim();
+      if (!id) return;
+      await selectJob(id);
+    }
+  });
 }
 
 // -------------------------
@@ -600,7 +893,13 @@ function wireEvents() {
 
 async function boot() {
   clearSelectionUI();
+  loadLayoutFromStorage();
+  applyColumnOrder();
+  applyColumnWidths();
+  initColumnResizers();
   wireEvents();
+  updateAutoRefreshIndicator();
+
   await checkBackend();
   await fetchJobs();
   startAutoRefresh();
