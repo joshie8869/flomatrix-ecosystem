@@ -3,230 +3,213 @@
 <head>
   <meta charset="UTF-8" />
   <title>FloMatrix — AI Builder Control Panel</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="assets/css/style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Main UI styles -->
+  <link rel="stylesheet" href="assets/css/ui.css" />
+
+  <!-- Export libs (CDN; safe to leave, UI still works offline except PDF/DOCX/XLSX) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.4.0/docx.umd.min.js"></script>
 </head>
-<body>
-  <div id="app-root">
-    <header class="fm-header">
-      <div class="fm-header-left">
-        <div class="fm-logo-wrapper">
-          <img
-            src="assets/img/flomatrix-logo.png"
-            alt="FloMatrix"
-            class="fm-logo-img"
-          />
-        </div>
-        <div class="fm-header-text">
-          <h1>FloMatrix — AI Builder Control Panel</h1>
-          <p>Mode C • Institutional AI Repair Pipeline</p>
+<body class="fm-body">
+  <div class="fm-root">
+
+    <!-- Top Bar ------------------------------------------------>
+    <header class="fm-topbar flo-panel glow-strong">
+      <div class="fm-top-left">
+        <div class="fm-logo">
+          <span class="fm-logo-mark">FM</span>
+          <span class="fm-logo-text">FloMatrix — AI Builder Control Panel</span>
+          <span class="fm-top-subtitle">Mode C • Institutional AI Repair Pipeline</span>
         </div>
       </div>
-      <div class="fm-header-right">
-        <div class="fm-status-chip" id="backend-status-chip">
-          <span class="dot dot-off"></span>
-          <span id="backend-status-text">Checking backend…</span>
+      <div class="fm-top-center">
+        <div id="backend-status-pill" class="fm-status-pill status-offline">
+          Backend: OFFLINE
         </div>
-
-        <div class="fm-header-controls">
-          <button id="btn-toggle-auto-refresh" class="fm-btn fm-btn-ghost">
-            Auto: ON (15s)
+        <div class="fm-auto-wrap">
+          <button id="auto-toggle" class="fm-auto-toggle auto-on">
+            <span id="auto-label">Auto: ON (15s)</span>
           </button>
-          <select id="auto-refresh-select" class="fm-select">
-            <option value="10000">10s</option>
+          <select id="auto-interval-select" class="fm-auto-select">
             <option value="15000" selected>15s</option>
             <option value="30000">30s</option>
             <option value="60000">60s</option>
           </select>
-          <button id="btn-layout-mode" class="fm-btn fm-btn-ghost">
-            Layout Edit: OFF
-          </button>
-          <button id="btn-refresh-all" class="fm-btn fm-btn-primary">
-            Refresh All
-          </button>
         </div>
+      </div>
+      <div class="fm-top-right">
+        <button id="layout-edit-toggle" class="fm-btn-secondary">Design Mode</button>
+        <button id="btn-refresh-all" class="fm-btn-primary">Refresh All</button>
       </div>
     </header>
 
-    <main class="fm-main-layout" id="fm-main-layout">
-      <!-- COLUMN: JOBS -->
-      <div class="fm-column" data-col-id="jobs">
-        <section class="fm-panel fm-panel-left">
-          <div class="fm-panel-header fm-drag-handle">
-            <h2>Job Queue</h2>
-            <div class="fm-panel-header-actions">
-              <button id="btn-refresh-jobs" class="fm-btn fm-btn-ghost">
-                Reload Jobs
-              </button>
-              <span class="fm-pill" id="jobs-count-pill">0 jobs</span>
+    <!-- Main Layout -------------------------------------------->
+    <main class="fm-main-grid">
+      <!-- Left: Job Queue ------------------------------------->
+      <section class="fm-column flo-panel glow-soft" id="panel-jobs">
+        <div class="fm-panel-header">
+          <h2>Job Queue</h2>
+          <div class="fm-panel-actions">
+            <button id="btn-reload-jobs" class="fm-btn-ghost">Reload Jobs</button>
+            <span class="fm-badge" id="jobs-count-badge">0 jobs</span>
+          </div>
+        </div>
+        <div class="fm-panel-body">
+          <input
+            id="job-filter-input"
+            class="fm-input"
+            placeholder="Filter by id, status, repo, path…"
+          />
+          <div id="jobs-empty-msg" class="fm-empty-msg">
+            Checking backend…
+          </div>
+          <div id="jobs-list" class="fm-jobs-list"></div>
+        </div>
+      </section>
+
+      <!-- Center: Job Details --------------------------------->
+      <section class="fm-column flo-panel glow-soft" id="panel-details">
+        <div class="fm-panel-header">
+          <h2>Job Details</h2>
+          <div class="fm-panel-actions">
+            <button id="btn-approve-patch" class="fm-btn-success">Approve Patch</button>
+            <button id="btn-run-job" class="fm-btn-warning">Run Job</button>
+            <button id="btn-reload-selected" class="fm-btn-ghost">Reload Selected</button>
+          </div>
+        </div>
+        <div class="fm-panel-body">
+          <div class="fm-job-header">
+            <div>
+              <div id="job-title" class="fm-job-title">No job selected</div>
+              <div id="job-meta" class="fm-job-meta"></div>
+            </div>
+            <div id="job-status-badge" class="fm-job-status-badge"></div>
+          </div>
+
+          <div class="fm-quick-tools">
+            <div class="fm-quick-tools-row">
+              <label for="job-load-id-input">Load Job by ID</label>
+              <div class="fm-inline">
+                <input id="job-load-id-input" class="fm-input" placeholder="Enter job id…" />
+                <button id="btn-load-job-id" class="fm-btn-secondary">Load</button>
+              </div>
+            </div>
+
+            <div class="fm-quick-tools-row">
+              <label>Export</label>
+              <div class="fm-inline">
+                <button id="btn-export-csv" class="fm-btn-ghost">CSV</button>
+                <button id="btn-export-xlsx" class="fm-btn-ghost">Excel</button>
+                <button id="btn-export-pdf" class="fm-btn-ghost">PDF</button>
+                <button id="btn-export-docx" class="fm-btn-ghost">DOCX</button>
+              </div>
             </div>
           </div>
 
-          <div class="fm-panel-subheader">
-            <input
-              id="job-search-input"
-              type="text"
-              placeholder="Filter by id, status, repo, path…"
-            />
+          <h3 class="fm-subheading">Job Timeline</h3>
+          <div id="job-timeline" class="fm-timeline"></div>
+        </div>
+      </section>
+
+      <!-- Right: Logs / Diff / AI Tools ----------------------->
+      <section class="fm-column flo-panel glow-soft" id="panel-logs">
+        <div class="fm-panel-header">
+          <h2>Insights & Tools</h2>
+        </div>
+        <div class="fm-panel-body">
+          <div class="fm-tabs">
+            <button id="tab-logs" class="fm-tab tab-active">Logs</button>
+            <button id="tab-diff" class="fm-tab">Patch Diff</button>
+            <button id="tab-ai" class="fm-tab">AI Tools</button>
           </div>
 
-          <div class="fm-jobs-list" id="jobs-list">
-            <!-- Populated by JS -->
-          </div>
-        </section>
-      </div>
-
-      <!-- RESIZER BETWEEN JOBS + DETAILS -->
-      <div
-        class="fm-column-resizer"
-        data-resizer-index="0"
-        title="Drag to resize columns"
-      ></div>
-
-      <!-- COLUMN: DETAILS -->
-      <div class="fm-column" data-col-id="details">
-        <section class="fm-panel fm-panel-center">
-          <div class="fm-panel-header fm-drag-handle">
-            <h2>Job Details</h2>
-            <div class="fm-panel-header-actions">
-              <span
-                id="selected-job-id-label"
-                class="fm-pill fm-pill-muted"
-              >
-                No job selected
-              </span>
-            </div>
+          <!-- Logs panel -->
+          <div id="logs-panel" class="fm-tab-panel">
+            <pre id="logs-text" class="fm-log-text">No job selected yet.</pre>
           </div>
 
-          <div class="fm-job-meta-grid" id="job-meta-grid">
-            <!-- Meta cards populated by JS -->
+          <!-- Diff panel -->
+          <div id="diff-panel" class="fm-tab-panel" style="display:none;">
+            <pre id="diff-text" class="fm-log-text">
+Don't worry, Josh — we are not there yet!
+(Logs & diff engine will plug in once the v2 patch backend is live.)
+            </pre>
           </div>
 
-          <div class="fm-job-actions">
-            <button
-              id="btn-approve-job"
-              class="fm-btn fm-btn-success"
-              disabled
-            >
-              ✅ Approve Patch
-            </button>
-            <button
-              id="btn-reject-job"
-              class="fm-btn fm-btn-danger"
-              disabled
-            >
-              ❌ Reject Patch
-            </button>
-            <button
-              id="btn-reload-selected"
-              class="fm-btn fm-btn-ghost"
-              disabled
-            >
-              🔄 Reload Selected
-            </button>
-          </div>
+          <!-- AI tools panel -->
+          <div id="ai-panel" class="fm-tab-panel" style="display:none;">
+            <div class="fm-ai-directory">
+              <h3>AI Builder Copilot</h3>
+              <p class="fm-ai-intro">
+                Pick a tool concept below. For now, these are design-time ideas;
+                when we wire v2 jobs, each tile will create a guided AI Builder job.
+              </p>
 
-          <!-- QUICK TOOLS -->
-          <div class="fm-subpanel fm-subpanel-inline">
-            <div class="fm-subpanel-header">
-              <h3>Quick Tools</h3>
-            </div>
-            <div class="fm-quick-tools">
-              <div class="fm-quick-tool">
-                <label for="quick-job-id-input">Load Job by ID</label>
-                <div class="fm-quick-input-row">
-                  <input
-                    id="quick-job-id-input"
-                    type="text"
-                    placeholder="Enter job id…"
-                  />
-                  <button
-                    id="btn-quick-load-job"
-                    class="fm-btn fm-btn-ghost"
-                  >
-                    Load
-                  </button>
+              <div class="fm-ai-grid">
+                <div class="fm-ai-card">
+                  <h4>Code Explainer</h4>
+                  <p>Explain any file or patch in plain English + trading context.</p>
+                  <span class="fm-ai-tag">Planned</span>
+                </div>
+
+                <div class="fm-ai-card">
+                  <h4>Bug Detector</h4>
+                  <p>Scan recent patches for likely runtime or logic errors.</p>
+                  <span class="fm-ai-tag">Planned</span>
+                </div>
+
+                <div class="fm-ai-card">
+                  <h4>FloMatrix Upgrade Ideas</h4>
+                  <p>Generate concrete upgrade plans for the FloMatrix engine, charts, and UI.</p>
+                  <span class="fm-ai-tag">Planned</span>
+                </div>
+
+                <div class="fm-ai-card">
+                  <h4>Backtester Designer</h4>
+                  <p>Design strategy templates and risk rules to feed into the future backtester.</p>
+                  <span class="fm-ai-tag">Planned</span>
+                </div>
+
+                <div class="fm-ai-card">
+                  <h4>Docs & SOP Writer</h4>
+                  <p>Draft SOPs, runbooks, and onboarding docs for future team members.</p>
+                  <span class="fm-ai-tag">Planned</span>
+                </div>
+
+                <div class="fm-ai-card">
+                  <h4>InteliTrade Copilot</h4>
+                  <p>Ideas and job templates for the InteliTrade UI & onboarding flows.</p>
+                  <span class="fm-ai-tag">Planned</span>
                 </div>
               </div>
 
-              <div class="fm-quick-tool">
-                <label for="status-filter-select">Status Filter</label>
-                <select id="status-filter-select" class="fm-select">
-                  <option value="">All statuses</option>
-                  <option value="queued">Queued / Pending</option>
-                  <option value="running">Running</option>
-                  <option value="completed">Completed</option>
-                  <option value="error">Error / Failed</option>
-                </select>
-              </div>
+              <p class="fm-ai-footer">
+                Don't worry, Josh — we are not there yet!<br />
+                This panel is intentionally non-destructive and won't touch your repo
+                until we design the exact job payloads together.
+              </p>
             </div>
           </div>
-
-          <div class="fm-panel fm-subpanel">
-            <div class="fm-subpanel-header">
-              <h3>Job Timeline</h3>
-            </div>
-            <div id="job-timeline" class="fm-timeline">
-              <!-- Populated by JS -->
-            </div>
-          </div>
-        </section>
-      </div>
-
-      <!-- RESIZER BETWEEN DETAILS + LOGS -->
-      <div
-        class="fm-column-resizer"
-        data-resizer-index="1"
-        title="Drag to resize columns"
-      ></div>
-
-      <!-- COLUMN: LOGS/DIFF -->
-      <div class="fm-column" data-col-id="logs">
-        <section class="fm-panel fm-panel-right">
-          <div class="fm-panel-tabs fm-drag-handle">
-            <button
-              class="fm-tab-button fm-tab-active"
-              data-tab="logs"
-              id="tab-logs-btn"
-            >
-              Logs
-            </button>
-            <button
-              class="fm-tab-button"
-              data-tab="diff"
-              id="tab-diff-btn"
-            >
-              Patch Diff
-            </button>
-          </div>
-
-          <div class="fm-tab-content-wrapper">
-            <div id="tab-logs" class="fm-tab-content fm-tab-active">
-              <pre id="logs-output" class="fm-log-output">
-No job selected yet.
-              </pre>
-            </div>
-
-            <div id="tab-diff" class="fm-tab-content">
-              <pre id="diff-output" class="fm-diff-output">
-No patch diff loaded yet.
-              </pre>
-            </div>
-          </div>
-        </section>
-      </div>
+        </div>
+      </section>
     </main>
 
-    <footer class="fm-footer">
-      <div class="fm-footer-left">
-        <span>FloMatrix AI Builder • Local Mode C</span>
+    <!-- Footer ------------------------------------------------->
+    <footer class="fm-footer flo-panel glow-soft">
+      <div id="footer-status" class="fm-footer-status">
+        Ready.
       </div>
       <div class="fm-footer-right">
-        <span id="auto-refresh-indicator">Auto-refresh: ON (15s)</span>
+        FloMatrix · Local Mode C · Auto-refresh:
+        <span id="footer-auto-status">ON</span>
       </div>
     </footer>
   </div>
 
+  <!-- Main app logic -->
   <script src="assets/js/app.js"></script>
 </body>
 </html>

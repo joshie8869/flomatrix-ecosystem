@@ -1,9 +1,13 @@
 # ==============================================================
-# FloMatrix AI Builder — Main Application
+# FloMatrix AI Builder — Main Application (UI + API)
 # ==============================================================
+
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
 from .routes import router as job_router
 from .config import (
     OPENAI_API_KEY,
@@ -15,25 +19,58 @@ from .config import (
     PROTECTED_PATH_PREFIXES,
 )
 
+# --------------------------------------------------------------
+# App
+# --------------------------------------------------------------
+
 app = FastAPI(
     title="FloMatrix AI Builder",
     version="1.0.0",
-    description="AI microservice responsible for generating & committing code."
+    description="AI microservice responsible for generating & committing code.",
 )
 
 # --------------------------------------------------------------
-# CORS (not strictly needed local, but correct for prod)
+# CORS — safe but simple (mostly redundant now that UI is same origin)
 # --------------------------------------------------------------
+
+CORS_ORIGINS = [
+    "http://localhost",
+    "http://127.0.0.1",
+    "http://localhost:9000",
+    "http://127.0.0.1:9000",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ORIGINS,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # --------------------------------------------------------------
-# Startup Diagnostics (Very Important!)
+# Mount /ui — serve the AI Builder control panel
+# Directory: services/ai-builder/ui/
 # --------------------------------------------------------------
+
+BASE_DIR = Path(__file__).resolve().parent          # ...\services\ai-builder\aibuilder
+ROOT_DIR = BASE_DIR.parent                          # ...\services\ai-builder
+UI_DIR = ROOT_DIR / "ui"                            # ...\services\ai-builder\ui
+
+if UI_DIR.exists():
+    app.mount(
+        "/ui",
+        StaticFiles(directory=str(UI_DIR), html=True),
+        name="ui",
+    )
+    print(f"[AIB][UI] Mounted AI Builder UI at /ui from {UI_DIR}")
+else:
+    print(f"[AIB][UI] WARNING: UI directory not found at {UI_DIR}")
+
+# --------------------------------------------------------------
+# Startup Diagnostics
+# --------------------------------------------------------------
+
 @app.on_event("startup")
 async def startup_event():
     print("\n===================================================")
@@ -58,9 +95,8 @@ async def startup_event():
     print("\n[AIB] Admin user:", ADMIN_USER)
     print("\n===================================================\n")
 
+# --------------------------------------------------------------
+# Routers — all AI Builder API endpoints
+# --------------------------------------------------------------
 
-# --------------------------------------------------------------
-# Routers
-# --------------------------------------------------------------
 app.include_router(job_router, prefix="/api/ai-builder")
-

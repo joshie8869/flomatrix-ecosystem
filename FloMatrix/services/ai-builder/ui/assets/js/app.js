@@ -1,908 +1,685 @@
-// FloMatrix AI Builder Control Panel
-// Standalone HTML+JS UI talking to the AI Builder backend.
-//
-// IMPORTANT: This assumes your backend exposes (from your Swagger):
-//   GET  /api/jobs               -> list jobs  (if available)
-//   GET  /api/jobs/status/{id}   -> job status + metadata
-//   POST /api/jobs/approve/{id}  -> approve a patch
-//   POST /api/jobs/reject/{id}   -> reject a patch
-//   GET  /api/jobs/logs/{id}     -> text logs    (optional, we handle 404)
-//   GET  /api/jobs/diff/{id}     -> unified diff (optional, we handle 404)
-//
-// If any URL is different, adjust API_ROUTES accordingly.
+// =============================================================
+// FloMatrix — AI Builder Control Panel
+// New UI engine, safe for /ui/ + /api/ai-builder
+// =============================================================
 
-const API_BASE = "http://localhost:9000";
+// ---------------- Backend routes (relative; same origin) ------
+const API_BASE = "/api/ai-builder";
 
 const API_ROUTES = {
-  listJobs: () => `${API_BASE}/api/jobs`,
-  jobStatus: (id) => `${API_BASE}/api/jobs/status/${encodeURIComponent(id)}`,
-  approve: (id) => `${API_BASE}/api/jobs/approve/${encodeURIComponent(id)}`,
-  reject: (id) => `${API_BASE}/api/jobs/reject/${encodeURIComponent(id)}`,
-  logs: (id) => `${API_BASE}/api/jobs/logs/${encodeURIComponent(id)}`,
-  diff: (id) => `${API_BASE}/api/jobs/diff/${encodeURIComponent(id)}`,
-  health: () => `${API_BASE}/api/jobs`,
+  listJobs: () => `${API_BASE}/jobs`,
+  jobStatus: (id) => `${API_BASE}/jobs/${encodeURIComponent(id)}`,
+  approve: (id) => `${API_BASE}/jobs/${encodeURIComponent(id)}/approve`,
+  run: (id) => `${API_BASE}/jobs/${encodeURIComponent(id)}/run`,
+  // Logs/diff endpoints do not exist yet; we keep placeholders.
+  logs: (id) => null,
+  diff: (id) => null,
+  // Health check uses /jobs instead of /docs to avoid CORS + file:// issues.
+  health: () => `${API_BASE}/jobs`,
 };
 
-const LAYOUT_STORAGE_KEY = "fm_ai_builder_layout";
-const WIDTHS_STORAGE_KEY = "fm_ai_builder_column_widths";
+// ---------------- Helpers -------------------------------------
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 
+function safeText(value, fallback = "—") {
+  if (value === null || value === undefined) return fallback;
+  if (typeof value === "string" && value.trim() === "") return fallback;
+  return String(value);
+}
+
+// ---------------- State ---------------------------------------
 const state = {
   jobs: [],
   selectedJobId: null,
-  autoRefreshMs: 15000,
-  autoRefreshEnabled: true,
-  autoRefreshTimer: null,
-  layoutEdit: false,
-  columnWidths: [26, 38, 36], // percentages
-  columnOrder: ["jobs", "details", "logs"],
+  backendOnline: false,
+  autoRefresh: true,
+  autoIntervalMs: 15000,
+  autoTimer: null,
+  lastError: null,
 };
 
-// DOM refs
-const backendStatusChip = document.getElementById("backend-status-chip");
-const backendStatusText = document.getElementById("backend-status-text");
-const jobsListEl = document.getElementById("jobs-list");
-const jobsCountPill = document.getElementById("jobs-count-pill");
-const jobSearchInput = document.getElementById("job-search-input");
-const selectedJobIdLabel = document.getElementById("selected-job-id-label");
-const jobMetaGrid = document.getElementById("job-meta-grid");
-const jobTimeline = document.getElementById("job-timeline");
-const btnApproveJob = document.getElementById("btn-approve-job");
-const btnRejectJob = document.getElementById("btn-reject-job");
-const btnReloadSelected = document.getElementById("btn-reload-selected");
-const btnRefreshJobs = document.getElementById("btn-refresh-jobs");
-const btnRefreshAll = document.getElementById("btn-refresh-all");
-const logsOutput = document.getElementById("logs-output");
-const diffOutput = document.getElementById("diff-output");
-const autoRefreshIndicator = document.getElementById("auto-refresh-indicator");
-const btnToggleAutoRefresh = document.getElementById(
-  "btn-toggle-auto-refresh"
-);
-const autoRefreshSelect = document.getElementById("auto-refresh-select");
-const btnLayoutMode = document.getElementById("btn-layout-mode");
-const mainLayout = document.getElementById("fm-main-layout");
-const quickJobIdInput = document.getElementById("quick-job-id-input");
-const btnQuickLoadJob = document.getElementById("btn-quick-load-job");
-const statusFilterSelect = document.getElementById("status-filter-select");
+// ---------------- Elements ------------------------------------
 
-// Tabs
-const tabLogsBtn = document.getElementById("tab-logs-btn");
-const tabDiffBtn = document.getElementById("tab-diff-btn");
-const tabLogs = document.getElementById("tab-logs");
-const tabDiff = document.getElementById("tab-diff");
+const elBackendStatus = $("#backend-status-pill");
+const elAutoToggle = $("#auto-toggle");
+const elAutoLabel = $("#auto-label");
+const elAutoSelect = $("#auto-interval-select");
+const elRefreshAll = $("#btn-refresh-all");
+const elLayoutEditToggle = $("#layout-edit-toggle");
 
-// -------------------------
-// Helpers
-// -------------------------
+const elJobsList = $("#jobs-list");
+const elJobsFilter = $("#job-filter-input");
+const elJobsReload = $("#btn-reload-jobs");
+const elJobsEmptyMsg = $("#jobs-empty-msg");
+const elJobsCountBadge = $("#jobs-count-badge");
 
-function setBackendStatus(ok, message) {
-  const dot = backendStatusChip.querySelector(".dot");
-  if (!dot) return;
+const elJobTitle = $("#job-title");
+const elJobMeta = $("#job-meta");
+const elJobStatusBadge = $("#job-status-badge");
+const elJobTimeline = $("#job-timeline");
 
-  backendStatusText.textContent = message;
-  dot.classList.remove("dot-on", "dot-off");
+const elApproveBtn = $("#btn-approve-patch");
+const elRunBtn = $("#btn-run-job");
+const elReloadSelectedBtn = $("#btn-reload-selected");
+const elLoadIdInput = $("#job-load-id-input");
+const elLoadIdBtn = $("#btn-load-job-id");
 
-  if (ok) {
-    dot.classList.add("dot-on");
-  } else {
-    dot.classList.add("dot-off");
-  }
-}
+const elLogsTabBtn = $("#tab-logs");
+const elDiffTabBtn = $("#tab-diff");
+const elAITabBtn = $("#tab-ai");
+const elLogsPanel = $("#logs-panel");
+const elDiffPanel = $("#diff-panel");
+const elAIPanel = $("#ai-panel");
+const elLogsText = $("#logs-text");
+const elDiffText = $("#diff-text");
+
+const elExportCSV = $("#btn-export-csv");
+const elExportXLSX = $("#btn-export-xlsx");
+const elExportPDF = $("#btn-export-pdf");
+const elExportDOCX = $("#btn-export-docx");
+
+const elFooterStatus = $("#footer-status");
+const elFooterAutoStatus = $("#footer-auto-status");
+
+// ---------------- Backend Communication -----------------------
 
 async function checkBackend() {
   try {
-    const res = await fetch(API_ROUTES.health(), {
-      method: "GET",
-      headers: { Accept: "application/json" },
-    });
-
+    const res = await fetch(API_ROUTES.health(), { method: "GET" });
     if (!res.ok) {
-      setBackendStatus(false, `Backend error: HTTP ${res.status}`);
-      return false;
-    }
-
-    setBackendStatus(true, "Backend: ONLINE");
-    return true;
-  } catch (err) {
-    console.error("Backend check failed:", err);
-    setBackendStatus(false, "Backend: OFFLINE");
-    return false;
-  }
-}
-
-function clearSelectionUI() {
-  selectedJobIdLabel.textContent = "No job selected";
-  jobMetaGrid.innerHTML = "";
-  jobTimeline.innerHTML = "";
-  logsOutput.textContent = "No job selected yet.";
-  diffOutput.textContent = "No patch diff loaded yet.";
-  btnApproveJob.disabled = true;
-  btnRejectJob.disabled = true;
-  btnReloadSelected.disabled = true;
-}
-
-function formatTimestamp(ts) {
-  if (!ts) return "—";
-  try {
-    const d = new Date(ts);
-    if (Number.isNaN(d.getTime())) return ts;
-    return d.toLocaleString();
-  } catch {
-    return ts;
-  }
-}
-
-function createMetaCard(label, value) {
-  const div = document.createElement("div");
-  div.className = "fm-meta-card";
-
-  const l = document.createElement("div");
-  l.className = "fm-meta-label";
-  l.textContent = label;
-
-  const v = document.createElement("div");
-  v.className = "fm-meta-value";
-  v.textContent = value ?? "—";
-
-  div.appendChild(l);
-  div.appendChild(v);
-  return div;
-}
-
-function statusToTagClass(status) {
-  if (!status) return "";
-  const s = status.toLowerCase();
-  if (s.includes("error") || s.includes("failed")) return "fm-tag-status-error";
-  if (s.includes("completed") || s.includes("done"))
-    return "fm-tag-status-complete";
-  if (s.includes("running") || s.includes("in_progress"))
-    return "fm-tag-status-running";
-  if (s.includes("queued") || s.includes("pending"))
-    return "fm-tag-status-pending";
-  return "";
-}
-
-// Simple diff formatting by prefix
-function renderDiffText(raw) {
-  if (!raw) {
-    diffOutput.textContent = "No diff available for this job.";
-    return;
-  }
-
-  const lines = raw.split("\n");
-  const styledLines = lines.map((line) => {
-    const span = document.createElement("span");
-    let cls = "";
-
-    if (line.startsWith("+")) cls = "fm-diff-line-add";
-    else if (line.startsWith("-")) cls = "fm-diff-line-del";
-    else if (
-      line.startsWith("@@") ||
-      line.startsWith("diff ") ||
-      line.startsWith("index ")
-    )
-      cls = "fm-diff-line-meta";
-
-    if (cls) span.classList.add(cls);
-    span.textContent = line || " ";
-    return span;
-  });
-
-  diffOutput.textContent = "";
-  styledLines.forEach((span, idx) => {
-    diffOutput.appendChild(span);
-    if (idx < styledLines.length - 1)
-      diffOutput.appendChild(document.createTextNode("\n"));
-  });
-}
-
-// -------------------------
-// Layout (column order + width)
-// -------------------------
-
-function loadLayoutFromStorage() {
-  try {
-    const layoutRaw = localStorage.getItem(LAYOUT_STORAGE_KEY);
-    if (layoutRaw) {
-      const parsed = JSON.parse(layoutRaw);
-      if (Array.isArray(parsed) && parsed.length === 3) {
-        state.columnOrder = parsed;
-      }
-    }
-
-    const widthsRaw = localStorage.getItem(WIDTHS_STORAGE_KEY);
-    if (widthsRaw) {
-      const parsed = JSON.parse(widthsRaw);
-      if (
-        Array.isArray(parsed) &&
-        parsed.length === 3 &&
-        parsed.every((n) => typeof n === "number")
-      ) {
-        state.columnWidths = parsed;
-      }
+      state.backendOnline = false;
+    } else {
+      state.backendOnline = true;
     }
   } catch (err) {
-    console.warn("Failed to load layout from storage:", err);
+    state.backendOnline = false;
+    state.lastError = err;
   }
-}
-
-function saveLayoutToStorage() {
-  try {
-    localStorage.setItem(
-      LAYOUT_STORAGE_KEY,
-      JSON.stringify(state.columnOrder)
-    );
-    localStorage.setItem(
-      WIDTHS_STORAGE_KEY,
-      JSON.stringify(state.columnWidths)
-    );
-  } catch (err) {
-    console.warn("Failed to save layout to storage:", err);
-  }
-}
-
-function applyColumnOrder() {
-  const columns = {};
-  mainLayout.querySelectorAll(".fm-column").forEach((col) => {
-    const id = col.getAttribute("data-col-id");
-    if (id) columns[id] = col;
-  });
-
-  // Existing resizers
-  const resizers = Array.from(
-    mainLayout.querySelectorAll(".fm-column-resizer")
-  );
-
-  mainLayout.innerHTML = "";
-
-  const order = state.columnOrder;
-  for (let i = 0; i < order.length; i++) {
-    const colId = order[i];
-    const col = columns[colId];
-    if (!col) continue;
-
-    mainLayout.appendChild(col);
-    if (i < order.length - 1) {
-      const resizer = resizers[i] || document.createElement("div");
-      resizer.className = "fm-column-resizer";
-      resizer.setAttribute("data-resizer-index", String(i));
-      resizer.title = "Drag to resize columns";
-      mainLayout.appendChild(resizer);
-    }
-  }
-}
-
-function applyColumnWidths() {
-  const cols = mainLayout.querySelectorAll(".fm-column");
-  cols.forEach((col, index) => {
-    const widthPct = state.columnWidths[index] || 33;
-    col.style.flexBasis = `${widthPct}%`;
-  });
-}
-
-function initColumnResizers() {
-  let isResizing = false;
-  let startX = 0;
-  let startWidths = [];
-  let activeIndex = -1;
-
-  function onMouseMove(e) {
-    if (!isResizing) return;
-
-    const deltaX = e.clientX - startX;
-    const rect = mainLayout.getBoundingClientRect();
-    const totalWidth = rect.width;
-
-    const deltaPct = (deltaX / totalWidth) * 100;
-
-    const leftIdx = activeIndex;
-    const rightIdx = activeIndex + 1;
-
-    let leftWidth = startWidths[leftIdx] + deltaPct;
-    let rightWidth = startWidths[rightIdx] - deltaPct;
-
-    // clamp to reasonable min width
-    leftWidth = Math.max(15, Math.min(70, leftWidth));
-    rightWidth = Math.max(15, Math.min(70, rightWidth));
-
-    // adjust other columns to keep total ~100
-    const otherIdx = [0, 1, 2].filter(
-      (i) => i !== leftIdx && i !== rightIdx
-    )[0];
-    const remainingWidth = 100 - leftWidth - rightWidth;
-    const originalOther = startWidths[otherIdx];
-    const factor = remainingWidth / originalOther;
-    const newOther = originalOther * factor;
-
-    state.columnWidths[leftIdx] = leftWidth;
-    state.columnWidths[rightIdx] = rightWidth;
-    state.columnWidths[otherIdx] = newOther;
-
-    applyColumnWidths();
-  }
-
-  function onMouseUp() {
-    if (!isResizing) return;
-    isResizing = false;
-    document.removeEventListener("mousemove", onMouseMove);
-    document.removeEventListener("mouseup", onMouseUp);
-    saveLayoutToStorage();
-  }
-
-  mainLayout.addEventListener("mousedown", (e) => {
-    const resizer = e.target.closest(".fm-column-resizer");
-    if (!resizer) return;
-
-    isResizing = true;
-    activeIndex = Number(resizer.getAttribute("data-resizer-index")) || 0;
-    startX = e.clientX;
-    startWidths = [...state.columnWidths];
-
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
-  });
-}
-
-function enableLayoutEditMode() {
-  state.layoutEdit = true;
-  document.body.classList.add("fm-layout-edit-on");
-  btnLayoutMode.textContent = "Layout Edit: ON";
-
-  mainLayout
-    .querySelectorAll(".fm-column")
-    .forEach((col) => (col.draggable = true));
-
-  mainLayout.addEventListener("dragstart", onColumnDragStart);
-  mainLayout.addEventListener("dragover", onColumnDragOver);
-  mainLayout.addEventListener("drop", onColumnDrop);
-}
-
-function disableLayoutEditMode() {
-  state.layoutEdit = false;
-  document.body.classList.remove("fm-layout-edit-on");
-  btnLayoutMode.textContent = "Layout Edit: OFF";
-
-  mainLayout
-    .querySelectorAll(".fm-column")
-    .forEach((col) => (col.draggable = false));
-
-  mainLayout.removeEventListener("dragstart", onColumnDragStart);
-  mainLayout.removeEventListener("dragover", onColumnDragOver);
-  mainLayout.removeEventListener("drop", onColumnDrop);
-}
-
-let dragSourceId = null;
-
-function onColumnDragStart(e) {
-  const col = e.target.closest(".fm-column");
-  if (!col) return;
-  dragSourceId = col.getAttribute("data-col-id");
-  e.dataTransfer.effectAllowed = "move";
-}
-
-function onColumnDragOver(e) {
-  if (!dragSourceId) return;
-  e.preventDefault();
-  e.dataTransfer.dropEffect = "move";
-}
-
-function onColumnDrop(e) {
-  e.preventDefault();
-  const targetCol = e.target.closest(".fm-column");
-  if (!targetCol || !dragSourceId) return;
-
-  const targetId = targetCol.getAttribute("data-col-id");
-  if (!targetId || targetId === dragSourceId) return;
-
-  const order = [...state.columnOrder];
-  const fromIndex = order.indexOf(dragSourceId);
-  const toIndex = order.indexOf(targetId);
-  if (fromIndex === -1 || toIndex === -1) return;
-
-  order.splice(fromIndex, 1);
-  order.splice(toIndex, 0, dragSourceId);
-  state.columnOrder = order;
-
-  applyColumnOrder();
-  applyColumnWidths();
-  saveLayoutToStorage();
-  dragSourceId = null;
-}
-
-// -------------------------
-// Jobs List
-// -------------------------
-
-function renderJobsList() {
-  const textFilter = (jobSearchInput.value || "").toLowerCase();
-  const statusFilter = (statusFilterSelect.value || "").toLowerCase();
-
-  jobsListEl.innerHTML = "";
-
-  const jobsToRender = state.jobs.filter((job) => {
-    // status filter
-    if (statusFilter) {
-      const s = (job.status || "").toLowerCase();
-      if (statusFilter === "queued" && !s.includes("queue") && !s.includes("pend"))
-        return false;
-      if (statusFilter === "running" && !s.includes("run")) return false;
-      if (statusFilter === "completed" && !s.includes("comp") && !s.includes("done"))
-        return false;
-      if (
-        statusFilter === "error" &&
-        !s.includes("error") &&
-        !s.includes("fail")
-      )
-        return false;
-    }
-
-    // text filter
-    if (!textFilter) return true;
-    const combined =
-      (job.id || "") +
-      " " +
-      (job.status || "") +
-      " " +
-      (job.repo || "") +
-      " " +
-      (job.path || "") +
-      " " +
-      (job.summary || "");
-    return combined.toLowerCase().includes(textFilter);
-  });
-
-  jobsCountPill.textContent = `${jobsToRender.length} job${
-    jobsToRender.length === 1 ? "" : "s"
-  }`;
-
-  if (jobsToRender.length === 0) {
-    const empty = document.createElement("div");
-    empty.className = "fm-job-row";
-    empty.innerHTML =
-      '<div class="fm-job-row-main">Unable to load jobs.</div><div class="fm-job-row-sub">Check that the AI Builder backend is running on localhost:9000, or that /api/jobs is implemented.</div>';
-    jobsListEl.appendChild(empty);
-    return;
-  }
-
-  for (const job of jobsToRender) {
-    const row = document.createElement("div");
-    row.className = "fm-job-row";
-    row.dataset.jobId = job.id;
-
-    if (job.id === state.selectedJobId) {
-      row.classList.add("fm-job-selected");
-    }
-
-    const main = document.createElement("div");
-    main.className = "fm-job-row-main";
-    main.textContent =
-      job.summary ||
-      job.title ||
-      job.description ||
-      `Job ${job.id || "(unknown id)"}`;
-
-    const sub = document.createElement("div");
-    sub.className = "fm-job-row-sub";
-    const repoPart = job.repo ? `[${job.repo}] ` : "";
-    const pathPart = job.path ? job.path : "";
-    const statusPart = job.status || "unknown";
-    sub.textContent = `${repoPart}${pathPart} • ${statusPart}`;
-
-    const left = document.createElement("div");
-    left.appendChild(main);
-    left.appendChild(sub);
-
-    const right = document.createElement("div");
-    right.className = "fm-job-row-tags";
-
-    const statusTag = document.createElement("span");
-    statusTag.className = `fm-tag ${statusToTagClass(job.status)}`;
-    statusTag.textContent = job.status || "unknown";
-    right.appendChild(statusTag);
-
-    if (job.mode) {
-      const modeTag = document.createElement("span");
-      modeTag.className = "fm-tag";
-      modeTag.textContent = job.mode;
-      right.appendChild(modeTag);
-    }
-
-    if (job.repo && !job.mode) {
-      const repoTag = document.createElement("span");
-      repoTag.className = "fm-tag";
-      repoTag.textContent = job.repo;
-      right.appendChild(repoTag);
-    }
-
-    row.appendChild(left);
-    row.appendChild(right);
-
-    row.addEventListener("click", () => {
-      selectJob(job.id);
-    });
-
-    jobsListEl.appendChild(row);
-  }
+  updateBackendStatusUI();
 }
 
 async function fetchJobs() {
-  try {
-    const res = await fetch(API_ROUTES.listJobs(), {
-      method: "GET",
-      headers: { Accept: "application/json" },
-    });
-
-    if (!res.ok) {
-      if (res.status === 404) {
-        state.jobs = [];
-        renderJobsList();
-        return;
-      }
-      throw new Error(`HTTP ${res.status}`);
+  if (!state.backendOnline) {
+    await checkBackend();
+    if (!state.backendOnline) {
+      renderJobs(true);
+      return;
     }
+  }
+
+  try {
+    const res = await fetch(API_ROUTES.listJobs());
+    if (!res.ok) throw new Error(`Jobs HTTP ${res.status}`);
 
     const data = await res.json();
-    const jobs = Array.isArray(data) ? data : data.jobs || [];
+    let jobs = Array.isArray(data) ? data : data.jobs || [];
+    if (!Array.isArray(jobs)) jobs = [];
+
     state.jobs = jobs;
-    renderJobsList();
+    renderJobs();
   } catch (err) {
-    console.error("Failed to fetch jobs:", err);
-    state.jobs = [];
-    renderJobsList();
+    console.error("[FM][UI] Failed to fetch jobs:", err);
+    state.lastError = err;
+    renderJobs(true);
   }
 }
 
-// -------------------------
-// Job details
-// -------------------------
-
-async function selectJob(jobId) {
+async function fetchJobDetails(jobId) {
   if (!jobId) return;
-
-  state.selectedJobId = jobId;
-  selectedJobIdLabel.textContent = `Job: ${jobId}`;
-
-  // Update selection highlight
-  document
-    .querySelectorAll(".fm-job-row")
-    .forEach((el) => el.classList.remove("fm-job-selected"));
-  const selectedRow = document.querySelector(
-    `.fm-job-row[data-job-id="${jobId}"]`
-  );
-  if (selectedRow) selectedRow.classList.add("fm-job-selected");
-
-  btnApproveJob.disabled = false;
-  btnRejectJob.disabled = false;
-  btnReloadSelected.disabled = false;
-
-  await Promise.all([
-    fetchJobStatus(jobId),
-    fetchJobLogs(jobId),
-    fetchJobDiff(jobId),
-  ]);
-}
-
-async function fetchJobStatus(jobId) {
   try {
-    const res = await fetch(API_ROUTES.jobStatus(jobId), {
-      method: "GET",
-      headers: { Accept: "application/json" },
-    });
-
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
-
+    const res = await fetch(API_ROUTES.jobStatus(jobId));
+    if (!res.ok) throw new Error(`Job ${jobId} HTTP ${res.status}`);
     const job = await res.json();
-    renderJobMeta(job);
-    renderJobTimeline(job);
+    state.selectedJobId = jobId;
+    renderJobDetails(job);
+    highlightSelectedJob(jobId);
+    // Logs & diff are not wired yet; show friendly placeholder.
+    renderLogsPlaceholder(jobId);
+    renderDiffPlaceholder(jobId);
   } catch (err) {
-    console.error("Failed to fetch job status:", err);
-    jobMetaGrid.innerHTML = "";
-    jobMetaGrid.appendChild(
-      createMetaCard("Status Error", `Could not load job: ${err}`)
-    );
+    console.error("[FM][UI] Failed to load job:", err);
+    state.lastError = err;
+    renderJobDetails(null, true);
   }
 }
 
-function renderJobMeta(job) {
-  jobMetaGrid.innerHTML = "";
-
-  const id = job.id || state.selectedJobId || "—";
-  const status = job.status || "unknown";
-  const repo = job.repo || job.repository || "—";
-  const path = job.path || job.file || job.target || "—";
-  const mode = job.mode || job.type || "—";
-  const createdAt = job.created_at || job.createdAt || job.created || job.queued_at;
-  const updatedAt = job.updated_at || job.updatedAt || job.finished_at;
-
-  jobMetaGrid.appendChild(createMetaCard("Job ID", id));
-  jobMetaGrid.appendChild(createMetaCard("Status", status));
-  jobMetaGrid.appendChild(createMetaCard("Mode", mode));
-  jobMetaGrid.appendChild(createMetaCard("Repository", repo));
-  jobMetaGrid.appendChild(createMetaCard("Target", path));
-  jobMetaGrid.appendChild(
-    createMetaCard("Created", formatTimestamp(createdAt))
-  );
-  jobMetaGrid.appendChild(
-    createMetaCard("Updated", formatTimestamp(updatedAt))
-  );
-}
-
-function renderJobTimeline(job) {
-  jobTimeline.innerHTML = "";
-
-  const events =
-    job.timeline ||
-    job.events ||
-    job.history || [
-      {
-        label: job.status || "Status",
-        message: "No explicit timeline. Status only.",
-        time: job.updated_at || job.created_at || null,
-      },
-    ];
-
-  for (const ev of events) {
-    const item = document.createElement("div");
-    item.className = "fm-timeline-item";
-
-    const dot = document.createElement("div");
-    dot.className = "fm-timeline-dot";
-
-    const content = document.createElement("div");
-    content.className = "fm-timeline-content";
-
-    const msg = document.createElement("div");
-    msg.textContent = ev.message || ev.label || JSON.stringify(ev);
-
-    const time = document.createElement("div");
-    time.className = "fm-timeline-time";
-    time.textContent = formatTimestamp(ev.time || ev.ts || ev.when);
-
-    content.appendChild(msg);
-    content.appendChild(time);
-
-    item.appendChild(dot);
-    item.appendChild(content);
-    jobTimeline.appendChild(item);
-  }
-}
-
-// -------------------------
-// Logs & diff
-// -------------------------
-
-async function fetchJobLogs(jobId) {
-  try {
-    const res = await fetch(API_ROUTES.logs(jobId), {
-      method: "GET",
-      headers: { Accept: "text/plain,application/json" },
-    });
-
-    if (!res.ok) {
-      if (res.status === 404) {
-        logsOutput.textContent = "No logs endpoint available for this job.";
-        return;
-      }
-      throw new Error(`HTTP ${res.status}`);
-    }
-
-    const text = await res.text();
-    logsOutput.textContent = text || "Logs are empty.";
-  } catch (err) {
-    console.error("Failed to fetch logs:", err);
-    logsOutput.textContent = `Failed to load logs: ${err}`;
-  }
-}
-
-async function fetchJobDiff(jobId) {
-  try {
-    const res = await fetch(API_ROUTES.diff(jobId), {
-      method: "GET",
-      headers: { Accept: "text/plain,application/json" },
-    });
-
-    if (!res.ok) {
-      if (res.status === 404) {
-        diffOutput.textContent =
-          "No diff endpoint available yet. You can add /api/jobs/diff/{id} on the backend.";
-        return;
-      }
-      throw new Error(`HTTP ${res.status}`);
-    }
-
-    const text = await res.text();
-    renderDiffText(text);
-  } catch (err) {
-    console.error("Failed to fetch diff:", err);
-    diffOutput.textContent = `Failed to load diff: ${err}`;
-  }
-}
-
-// -------------------------
-// Approve / Reject
-// -------------------------
-
-async function postJobAction(kind) {
-  const jobId = state.selectedJobId;
+async function approveJob(jobId) {
   if (!jobId) return;
-
-  const isApprove = kind === "approve";
-  const url = isApprove ? API_ROUTES.approve(jobId) : API_ROUTES.reject(jobId);
-
-  const btn = isApprove ? btnApproveJob : btnRejectJob;
-  const label = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = isApprove ? "Approving…" : "Rejecting…";
-
   try {
-    const res = await fetch(url, { method: "POST" });
-
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
-
-    const resultText = await res.text();
-    logsOutput.textContent =
-      (isApprove ? "✅ Job approved.\n\n" : "❌ Job rejected.\n\n") +
-      resultText;
-
-    await fetchJobStatus(jobId);
+    setFooterStatus(`Approving job ${jobId}…`);
+    const res = await fetch(API_ROUTES.approve(jobId), { method: "POST" });
+    if (!res.ok) throw new Error(`Approve HTTP ${res.status}`);
+    setFooterStatus(`Job ${jobId} approved.`);
     await fetchJobs();
+    await fetchJobDetails(jobId);
   } catch (err) {
-    console.error("Job action failed:", err);
-    logsOutput.textContent = `Action failed: ${err}`;
-  } finally {
-    btn.textContent = label;
-    btn.disabled = false;
+    console.error("[FM][UI] Approve failed:", err);
+    state.lastError = err;
+    setFooterStatus(`Failed to approve job ${jobId}.`);
   }
 }
 
-// -------------------------
-// Tabs
-// -------------------------
-
-function activateTab(which) {
-  if (which === "logs") {
-    tabLogsBtn.classList.add("fm-tab-active");
-    tabDiffBtn.classList.remove("fm-tab-active");
-    tabLogs.classList.add("fm-tab-active");
-    tabDiff.classList.remove("fm-tab-active");
-  } else {
-    tabLogsBtn.classList.remove("fm-tab-active");
-    tabDiffBtn.classList.add("fm-tab-active");
-    tabLogs.classList.remove("fm-tab-active");
-    tabDiff.classList.add("fm-tab-active");
-  }
-}
-
-// -------------------------
-// Auto-refresh
-// -------------------------
-
-function updateAutoRefreshIndicator() {
-  const onOff = state.autoRefreshEnabled ? "ON" : "OFF";
-  autoRefreshIndicator.textContent = `Auto-refresh: ${onOff} (${Math.round(
-    state.autoRefreshMs / 1000
-  )}s)`;
-  btnToggleAutoRefresh.textContent = `Auto: ${onOff} (${Math.round(
-    state.autoRefreshMs / 1000
-  )}s)`;
-}
-
-function startAutoRefresh() {
-  stopAutoRefresh();
-  if (!state.autoRefreshEnabled) return;
-
-  updateAutoRefreshIndicator();
-
-  state.autoRefreshTimer = setInterval(async () => {
+async function runJob(jobId) {
+  if (!jobId) return;
+  try {
+    setFooterStatus(`Running job ${jobId}…`);
+    const res = await fetch(API_ROUTES.run(jobId), { method: "POST" });
+    if (!res.ok) throw new Error(`Run HTTP ${res.status}`);
+    setFooterStatus(`Job ${jobId} run triggered.`);
     await fetchJobs();
-    if (state.selectedJobId) {
-      await fetchJobStatus(state.selectedJobId);
-    }
-  }, state.autoRefreshMs);
-}
-
-function stopAutoRefresh() {
-  if (state.autoRefreshTimer) {
-    clearInterval(state.autoRefreshTimer);
-    state.autoRefreshTimer = null;
+    await fetchJobDetails(jobId);
+  } catch (err) {
+    console.error("[FM][UI] Run failed:", err);
+    state.lastError = err;
+    setFooterStatus(`Failed to run job ${jobId}.`);
   }
 }
 
-// -------------------------
-// Event wiring
-// -------------------------
+// ---------------- UI Rendering --------------------------------
+
+function updateBackendStatusUI() {
+  if (!elBackendStatus) return;
+  elBackendStatus.classList.remove("status-online", "status-offline");
+  if (state.backendOnline) {
+    elBackendStatus.textContent = "Backend: ONLINE";
+    elBackendStatus.classList.add("status-online");
+  } else {
+    elBackendStatus.textContent = "Backend: OFFLINE";
+    elBackendStatus.classList.add("status-offline");
+  }
+}
+
+function renderJobs(error = false) {
+  if (!elJobsList) return;
+  elJobsList.innerHTML = "";
+
+  if (error) {
+    if (elJobsEmptyMsg) {
+      elJobsEmptyMsg.textContent =
+        "Unable to load jobs. Check that the AI Builder backend is running and /api/ai-builder/jobs is reachable.";
+      elJobsEmptyMsg.style.display = "block";
+    }
+    if (elJobsCountBadge) elJobsCountBadge.textContent = "0 jobs";
+    return;
+  }
+
+  const filter = (elJobsFilter?.value || "").trim().toLowerCase();
+  let jobs = state.jobs || [];
+
+  if (filter) {
+    jobs = jobs.filter((job) => {
+      const id = safeText(job.id || job.job_id || "", "").toLowerCase();
+      const status = safeText(job.status || job.state || "", "").toLowerCase();
+      const repo = safeText(job.repo || job.repository || "", "").toLowerCase();
+      const path = safeText(job.path || job.target_path || "", "").toLowerCase();
+      return (
+        id.includes(filter) ||
+        status.includes(filter) ||
+        repo.includes(filter) ||
+        path.includes(filter)
+      );
+    });
+  }
+
+  if (elJobsCountBadge) {
+    elJobsCountBadge.textContent = `${jobs.length} job${jobs.length === 1 ? "" : "s"}`;
+  }
+
+  if (jobs.length === 0) {
+    if (elJobsEmptyMsg) {
+      elJobsEmptyMsg.textContent = state.backendOnline
+        ? "No jobs yet. When the AI Builder creates jobs, they will appear here."
+        : "Unable to load jobs. Check that the AI Builder backend is running.";
+      elJobsEmptyMsg.style.display = "block";
+    }
+    return;
+  } else if (elJobsEmptyMsg) {
+    elJobsEmptyMsg.style.display = "none";
+  }
+
+  jobs.forEach((job) => {
+    const jobId = job.id || job.job_id || job.uuid || "(no id)";
+    const status = job.status || job.state || "unknown";
+    const repo = job.repo || job.repository || "";
+    const path = job.path || job.target_path || "";
+
+    const row = document.createElement("div");
+    row.className = "job-row";
+    row.dataset.jobId = jobId;
+
+    row.innerHTML = `
+      <div class="job-row-main">
+        <div class="job-row-id">${safeText(jobId)}</div>
+        <div class="job-row-status">${safeText(status)}</div>
+      </div>
+      <div class="job-row-sub">
+        <span class="job-row-repo">${safeText(repo)}</span>
+        <span class="job-row-path">${safeText(path)}</span>
+      </div>
+    `;
+
+    row.addEventListener("click", () => {
+      fetchJobDetails(jobId);
+    });
+
+    elJobsList.appendChild(row);
+  });
+
+  if (!state.selectedJobId && jobs.length > 0) {
+    const firstId = jobs[0].id || jobs[0].job_id || jobs[0].uuid;
+    if (firstId) {
+      fetchJobDetails(firstId);
+    }
+  }
+
+  highlightSelectedJob(state.selectedJobId);
+}
+
+function highlightSelectedJob(jobId) {
+  if (!elJobsList) return;
+  $$(".job-row").forEach((row) => {
+    const selected = jobId && row.dataset.jobId === String(jobId);
+    row.classList.toggle("job-row-selected", selected);
+  });
+}
+
+function renderJobDetails(job, error = false) {
+  if (!elJobTitle || !elJobMeta) return;
+
+  if (error || !job) {
+    elJobTitle.textContent = "No job selected";
+    elJobMeta.textContent = "";
+    if (elJobStatusBadge) elJobStatusBadge.textContent = "";
+    if (elJobTimeline) elJobTimeline.innerHTML = "";
+    return;
+  }
+
+  const jobId = job.id || job.job_id || job.uuid || "(no id)";
+  const status = job.status || job.state || "unknown";
+  const repo = job.repo || job.repository || "";
+  const path = job.path || job.target_path || "";
+  const createdAt =
+    job.created_at || job.created || job.timestamp || job.createdAt || "";
+
+  elJobTitle.textContent = `Job ${jobId}`;
+  elJobMeta.textContent = [
+    repo && `Repo: ${repo}`,
+    path && `Path: ${path}`,
+    createdAt && `Created: ${createdAt}`,
+  ]
+    .filter(Boolean)
+    .join(" • ");
+
+  if (elJobStatusBadge) {
+    elJobStatusBadge.textContent = safeText(status);
+    elJobStatusBadge.className = "fm-job-status-badge";
+  }
+
+  if (elJobTimeline) {
+    elJobTimeline.innerHTML = "";
+    const steps = job.timeline || job.events || [];
+    if (Array.isArray(steps) && steps.length > 0) {
+      steps.forEach((step) => {
+        const label = step.label || step.event || "Event";
+        const ts = step.timestamp || step.time || "";
+        const msg = step.message || step.detail || "";
+        const div = document.createElement("div");
+        div.className = "timeline-item";
+        div.innerHTML = `
+          <div class="timeline-header">
+            <span class="timeline-label">${safeText(label)}</span>
+            <span class="timeline-time">${safeText(ts)}</span>
+          </div>
+          <div class="timeline-body">${safeText(msg)}</div>
+        `;
+        elJobTimeline.appendChild(div);
+      });
+    }
+  }
+}
+
+function renderLogsPlaceholder(jobId) {
+  if (!elLogsText) return;
+  if (!jobId) {
+    elLogsText.textContent = "No job selected yet.";
+    return;
+  }
+  elLogsText.textContent =
+    `Logs for job ${jobId} are not wired yet.\n\n` +
+    "Don't worry, Josh — we are not there yet!\n" +
+    "Once the v2 log endpoint is live, this panel will show full AI Builder logs.";
+}
+
+function renderDiffPlaceholder(jobId) {
+  if (!elDiffText) return;
+  elDiffText.textContent =
+    "Don't worry, Josh — we are not there yet!\n\n" +
+    "Patch diff rendering will plug in here once the backend exposes\n" +
+    "/jobs/{id}/diff. For now this stays intentionally non-destructive.";
+}
+
+// ---------------- Auto Refresh --------------------------------
+
+function setupAutoRefresh() {
+  clearAutoTimer();
+  if (!state.autoRefresh) return;
+  state.autoTimer = setInterval(() => {
+    fetchJobs();
+  }, state.autoIntervalMs);
+  updateAutoUI();
+}
+
+function clearAutoTimer() {
+  if (state.autoTimer) {
+    clearInterval(state.autoTimer);
+    state.autoTimer = null;
+  }
+}
+
+function updateAutoUI() {
+  if (elAutoToggle && elAutoLabel && elFooterAutoStatus) {
+    elAutoToggle.classList.toggle("auto-on", state.autoRefresh);
+    elAutoToggle.classList.toggle("auto-off", !state.autoRefresh);
+    elAutoLabel.textContent = state.autoRefresh
+      ? `Auto: ON (${Math.round(state.autoIntervalMs / 1000)}s)`
+      : "Auto: OFF";
+    elFooterAutoStatus.textContent = state.autoRefresh ? "ON" : "OFF";
+  }
+}
+
+// ---------------- Export Helpers ------------------------------
+
+function getExportRows() {
+  // basic flatten of jobs + selected job details
+  return state.jobs.map((job) => ({
+    id: job.id || job.job_id || job.uuid || "",
+    status: job.status || job.state || "",
+    repo: job.repo || job.repository || "",
+    path: job.path || job.target_path || "",
+    created_at:
+      job.created_at || job.created || job.timestamp || job.createdAt || "",
+  }));
+}
+
+function exportCSV() {
+  const rows = getExportRows();
+  if (rows.length === 0) {
+    alert("No jobs to export yet.");
+    return;
+  }
+  const headers = Object.keys(rows[0]);
+  const csv = [
+    headers.join(","),
+    ...rows.map((r) => headers.map((h) => JSON.stringify(r[h] ?? "")).join(",")),
+  ].join("\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "flomatrix_jobs.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportXLSX() {
+  try {
+    if (typeof XLSX === "undefined") {
+      alert("XLSX library not loaded.");
+      return;
+    }
+    const rows = getExportRows();
+    if (rows.length === 0) {
+      alert("No jobs to export yet.");
+      return;
+    }
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Jobs");
+    XLSX.writeFile(wb, "flomatrix_jobs.xlsx");
+  } catch (err) {
+    console.error("XLSX export failed:", err);
+    alert("Excel export failed. Check console for details.");
+  }
+}
+
+function exportPDF() {
+  try {
+    if (typeof window.jspdf === "undefined" && typeof window.jspdf === "undefined" && typeof window.jspdf === "undefined") {
+      // jspdf.umd exposes window.jspdf.jsPDF
+    }
+    const jsPDF = window.jspdf?.jsPDF;
+    if (!jsPDF) {
+      alert("jsPDF library not loaded.");
+      return;
+    }
+    const rows = getExportRows();
+    if (rows.length === 0) {
+      alert("No jobs to export yet.");
+      return;
+    }
+    const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
+    doc.setFontSize(12);
+    doc.text("FloMatrix — AI Builder Jobs Snapshot", 40, 40);
+    let y = 70;
+    rows.forEach((r) => {
+      doc.text(`ID: ${r.id}`, 40, y);
+      doc.text(`Status: ${r.status}`, 40, y + 14);
+      doc.text(`Repo: ${r.repo}`, 40, y + 28);
+      doc.text(`Path: ${r.path}`, 40, y + 42);
+      doc.text(`Created: ${r.created_at}`, 40, y + 56);
+      y += 80;
+      if (y > 740) {
+        doc.addPage();
+        y = 40;
+      }
+    });
+    doc.save("flomatrix_jobs.pdf");
+  } catch (err) {
+    console.error("PDF export failed:", err);
+    alert("PDF export failed. Check console for details.");
+  }
+}
+
+function exportDOCX() {
+  try {
+    const docxLib = window.docx || window.docxLib || window.docxjs || window.docxjsLib;
+    if (!docxLib || !docxLib.Document || !docxLib.Packer || !docxLib.Paragraph) {
+      alert("DOCX library not loaded.");
+      return;
+    }
+    const { Document, Packer, Paragraph, TextRun } = docxLib;
+    const rows = getExportRows();
+    if (rows.length === 0) {
+      alert("No jobs to export yet.");
+      return;
+    }
+
+    const paragraphs = [];
+    paragraphs.push(
+      new Paragraph({
+        children: [new TextRun({ text: "FloMatrix — AI Builder Jobs Snapshot", bold: true, size: 28 })],
+      })
+    );
+
+    rows.forEach((r) => {
+      paragraphs.push(
+        new Paragraph({
+          children: [
+            new TextRun({ text: `ID: ${r.id}`, break: 1 }),
+            new TextRun({ text: `Status: ${r.status}`, break: 1 }),
+            new TextRun({ text: `Repo: ${r.repo}`, break: 1 }),
+            new TextRun({ text: `Path: ${r.path}`, break: 1 }),
+            new TextRun({ text: `Created: ${r.created_at}`, break: 1 }),
+          ],
+        })
+      );
+    });
+
+    const doc = new Document({
+      sections: [{ properties: {}, children: paragraphs }],
+    });
+
+    Packer.toBlob(doc).then((blob) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "flomatrix_jobs.docx";
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  } catch (err) {
+    console.error("DOCX export failed:", err);
+    alert("DOCX export failed. Check console for details.");
+  }
+}
+
+// ---------------- Layout / Design Mode ------------------------
+
+function toggleDesignMode() {
+  document.body.classList.toggle("fm-design-mode");
+  const on = document.body.classList.contains("fm-design-mode");
+  if (elLayoutEditToggle) {
+    elLayoutEditToggle.textContent = on ? "Exit Design Mode" : "Design Mode";
+  }
+  setFooterStatus(on ? "Design Mode ON — rearrange panels visually." : "Design Mode OFF.");
+}
+
+// ---------------- Footer status -------------------------------
+
+function setFooterStatus(text) {
+  if (elFooterStatus) elFooterStatus.textContent = text || "";
+}
+
+// ---------------- Event Wiring -------------------------------
 
 function wireEvents() {
-  jobSearchInput.addEventListener("input", () => {
-    renderJobsList();
-  });
+  if (elRefreshAll) {
+    elRefreshAll.addEventListener("click", async () => {
+      setFooterStatus("Refreshing backend status + jobs…");
+      await checkBackend();
+      await fetchJobs();
+      setFooterStatus("Ready.");
+    });
+  }
 
-  statusFilterSelect.addEventListener("change", () => {
-    renderJobsList();
-  });
+  if (elJobsReload) {
+    elJobsReload.addEventListener("click", async () => {
+      setFooterStatus("Reloading jobs…");
+      await fetchJobs();
+      setFooterStatus("Ready.");
+    });
+  }
 
-  btnRefreshJobs.addEventListener("click", async () => {
-    await fetchJobs();
-  });
+  if (elJobsFilter) {
+    elJobsFilter.addEventListener("input", () => {
+      renderJobs();
+    });
+  }
 
-  btnRefreshAll.addEventListener("click", async () => {
-    await checkBackend();
-    await fetchJobs();
-    if (state.selectedJobId) {
-      await fetchJobStatus(state.selectedJobId);
-      await fetchJobLogs(state.selectedJobId);
-      await fetchJobDiff(state.selectedJobId);
-    }
-  });
-
-  btnApproveJob.addEventListener("click", () => postJobAction("approve"));
-  btnRejectJob.addEventListener("click", () => postJobAction("reject"));
-  btnReloadSelected.addEventListener("click", async () => {
-    if (!state.selectedJobId) return;
-    await fetchJobStatus(state.selectedJobId);
-    await fetchJobLogs(state.selectedJobId);
-    await fetchJobDiff(state.selectedJobId);
-  });
-
-  tabLogsBtn.addEventListener("click", () => activateTab("logs"));
-  tabDiffBtn.addEventListener("click", () => activateTab("diff"));
-
-  btnToggleAutoRefresh.addEventListener("click", () => {
-    state.autoRefreshEnabled = !state.autoRefreshEnabled;
-    updateAutoRefreshIndicator();
-    if (state.autoRefreshEnabled) startAutoRefresh();
-    else stopAutoRefresh();
-  });
-
-  autoRefreshSelect.addEventListener("change", () => {
-    const val = Number(autoRefreshSelect.value) || 15000;
-    state.autoRefreshMs = val;
-    if (state.autoRefreshEnabled) startAutoRefresh();
-    else updateAutoRefreshIndicator();
-  });
-
-  btnLayoutMode.addEventListener("click", () => {
-    if (state.layoutEdit) {
-      disableLayoutEditMode();
-    } else {
-      enableLayoutEditMode();
-    }
-  });
-
-  btnQuickLoadJob.addEventListener("click", async () => {
-    const id = (quickJobIdInput.value || "").trim();
-    if (!id) return;
-    await selectJob(id);
-  });
-
-  quickJobIdInput.addEventListener("keyup", async (e) => {
-    if (e.key === "Enter") {
-      const id = (quickJobIdInput.value || "").trim();
+  if (elLoadIdBtn && elLoadIdInput) {
+    elLoadIdBtn.addEventListener("click", () => {
+      const id = elLoadIdInput.value.trim();
       if (!id) return;
-      await selectJob(id);
-    }
-  });
+      fetchJobDetails(id);
+    });
+  }
+
+  if (elApproveBtn) {
+    elApproveBtn.addEventListener("click", () => {
+      if (!state.selectedJobId) return;
+      approveJob(state.selectedJobId);
+    });
+  }
+
+  if (elRunBtn) {
+    elRunBtn.addEventListener("click", () => {
+      if (!state.selectedJobId) return;
+      runJob(state.selectedJobId);
+    });
+  }
+
+  if (elReloadSelectedBtn) {
+    elReloadSelectedBtn.addEventListener("click", () => {
+      if (!state.selectedJobId) return;
+      fetchJobDetails(state.selectedJobId);
+    });
+  }
+
+  if (elAutoToggle) {
+    elAutoToggle.addEventListener("click", () => {
+      state.autoRefresh = !state.autoRefresh;
+      setupAutoRefresh();
+    });
+  }
+
+  if (elAutoSelect) {
+    elAutoSelect.addEventListener("change", () => {
+      const ms = parseInt(elAutoSelect.value, 10);
+      if (!Number.isNaN(ms) && ms >= 3000) {
+        state.autoIntervalMs = ms;
+        setupAutoRefresh();
+      }
+    });
+  }
+
+  if (elLayoutEditToggle) {
+    elLayoutEditToggle.addEventListener("click", toggleDesignMode);
+  }
+
+  if (elLogsTabBtn && elDiffTabBtn && elAITabBtn) {
+    elLogsTabBtn.addEventListener("click", () => {
+      setActiveTab("logs");
+    });
+    elDiffTabBtn.addEventListener("click", () => {
+      setActiveTab("diff");
+    });
+    elAITabBtn.addEventListener("click", () => {
+      setActiveTab("ai");
+    });
+  }
+
+  if (elExportCSV) elExportCSV.addEventListener("click", exportCSV);
+  if (elExportXLSX) elExportXLSX.addEventListener("click", exportXLSX);
+  if (elExportPDF) elExportPDF.addEventListener("click", exportPDF);
+  if (elExportDOCX) elExportDOCX.addEventListener("click", exportDOCX);
 }
 
-// -------------------------
-// Boot
-// -------------------------
+function setActiveTab(tab) {
+  if (!elLogsTabBtn || !elDiffTabBtn || !elAITabBtn) return;
+  [elLogsTabBtn, elDiffTabBtn, elAITabBtn].forEach((btn) =>
+    btn.classList.remove("tab-active")
+  );
+  if (tab === "logs") elLogsTabBtn.classList.add("tab-active");
+  if (tab === "diff") elDiffTabBtn.classList.add("tab-active");
+  if (tab === "ai") elAITabBtn.classList.add("tab-active");
+
+  if (elLogsPanel && elDiffPanel && elAIPanel) {
+    elLogsPanel.style.display = tab === "logs" ? "block" : "none";
+    elDiffPanel.style.display = tab === "diff" ? "block" : "none";
+    elAIPanel.style.display = tab === "ai" ? "block" : "none";
+  }
+}
+
+// ---------------- Boot ----------------------------------------
 
 async function boot() {
-  clearSelectionUI();
-  loadLayoutFromStorage();
-  applyColumnOrder();
-  applyColumnWidths();
-  initColumnResizers();
+  updateBackendStatusUI();
+  updateAutoUI();
   wireEvents();
-  updateAutoRefreshIndicator();
-
+  setActiveTab("logs");
+  setFooterStatus("Checking backend & loading jobs…");
   await checkBackend();
   await fetchJobs();
-  startAutoRefresh();
+  setupAutoRefresh();
+  setFooterStatus("Ready.");
 }
 
-document.addEventListener("DOMContentLoaded", boot);
+document.addEventListener("DOMContentLoaded", () => {
+  boot().catch((err) => {
+    console.error("[FM][UI] Boot failed:", err);
+    state.lastError = err;
+    setFooterStatus("Failed to initialize AI Builder UI.");
+  });
+});
