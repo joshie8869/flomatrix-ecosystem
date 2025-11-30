@@ -1,5 +1,5 @@
 # ==============================================================
-# FloMatrix AI Builder — Main Application
+# FloMatrix AI Builder — Main Application (UI + API)
 # ==============================================================
 
 from pathlib import Path
@@ -7,8 +7,11 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse
+from .ai_commands import router as ai_commands_router
 
 from .routes import router as job_router
+from .ai_commands import router as ai_commands_router
 from .config import (
     OPENAI_API_KEY,
     OPENAI_MODEL,
@@ -20,8 +23,9 @@ from .config import (
 )
 
 # --------------------------------------------------------------
-# Core FastAPI app
+# App
 # --------------------------------------------------------------
+
 app = FastAPI(
     title="FloMatrix AI Builder",
     version="1.0.0",
@@ -29,58 +33,69 @@ app = FastAPI(
 )
 
 # --------------------------------------------------------------
-# CORS (fine for local dev)
+# CORS — wide open for local dev
 # --------------------------------------------------------------
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # --------------------------------------------------------------
-# UI mounting (this is what should make http://localhost:9000/ui/ work)
+# UI paths
+#   ROOT_DIR:   .../services/ai-builder
+#   UI_DIR:     .../services/ai-builder/ui
+#   assets dir: .../services/ai-builder/ui/assets
 # --------------------------------------------------------------
-# Layout:
-#   C:\AnyChart\FloMatrix\services\ai-builder\    <- project root
-#       ui\                                      <- UI folder (index.html, assets, ...)
-#       aibuilder\                               <- this package
 
-BASE_DIR = Path(__file__).resolve().parent          # ...\ai-builder\aibuilder
-PROJECT_ROOT = BASE_DIR.parent                      # ...\ai-builder
-UI_DIR = PROJECT_ROOT / "ui"                        # ...\ai-builder\ui
+BASE_DIR = Path(__file__).resolve().parent          # .../aibuilder
+ROOT_DIR = BASE_DIR.parent                          # .../services/ai-builder
+UI_DIR = (ROOT_DIR / "ui").resolve()
+ASSETS_DIR = UI_DIR / "assets"
 
-print("[AIB][UI] BASE_DIR     =", BASE_DIR)
-print("[AIB][UI] PROJECT_ROOT =", PROJECT_ROOT)
-print("[AIB][UI] UI_DIR       =", UI_DIR, "exists?", UI_DIR.exists())
+print(f"[AIB][PATH] BASE_DIR   = {BASE_DIR}")
+print(f"[AIB][PATH] ROOT_DIR   = {ROOT_DIR}")
+print(f"[AIB][PATH] UI_DIR     = {UI_DIR} (exists={UI_DIR.exists()})")
+print(f"[AIB][PATH] ASSETS_DIR = {ASSETS_DIR} (exists={ASSETS_DIR.exists()})")
 
-if UI_DIR.exists():
-    print("[AIB][UI] Mounting AI Builder UI from:", UI_DIR)
+# --------------------------------------------------------------
+# Explicit /ui route → always return index.html
+# --------------------------------------------------------------
+
+@app.get("/ui", response_class=HTMLResponse)
+@app.get("/ui/", response_class=HTMLResponse)
+async def serve_ui():
+    index_path = UI_DIR / "index.html"
+    if not index_path.exists():
+        return HTMLResponse(
+            content=f"<h1>index.html not found</h1><p>Looked in: {index_path}</p>",
+            status_code=500,
+        )
+    return index_path.read_text(encoding="utf-8")
+
+# --------------------------------------------------------------
+# Static assets under /assets/...  (matches paths like "assets/css/ui.css")
+# --------------------------------------------------------------
+
+if ASSETS_DIR.exists():
     app.mount(
-        "/ui",
-        StaticFiles(directory=str(UI_DIR), html=True),
-        name="ui",
+        "/assets",
+        StaticFiles(directory=str(ASSETS_DIR)),
+        name="assets",
     )
+    print(f"[AIB][UI] Mounted assets at /assets from {ASSETS_DIR}")
 else:
-    print(
-        "[AIB][UI] WARNING: UI directory not found at",
-        UI_DIR,
-        "— /ui will return 404.",
-    )
+    print(f"[AIB][UI] WARNING: assets dir not found at {ASSETS_DIR}")
 
 # --------------------------------------------------------------
-# Tiny debug route to prove THIS main.py is running
+# Startup Diagnostics
 # --------------------------------------------------------------
-@app.get("/ui-test")
-async def ui_test():
-    return {"status": "ok", "message": "FloMatrix UI main.py is active"}
 
-
-# --------------------------------------------------------------
-# Startup Diagnostics (Very Important!)
-# --------------------------------------------------------------
 @app.on_event("startup")
-async def startup_event() -> None:
+async def startup_event():
     print("\n===================================================")
     print("     🚀 FloMatrix AI Builder — Startup Report")
     print("===================================================\n")
@@ -103,8 +118,9 @@ async def startup_event() -> None:
     print("\n[AIB] Admin user:", ADMIN_USER)
     print("\n===================================================\n")
 
+# --------------------------------------------------------------
+# Routers — all AI Builder API endpoints
+# --------------------------------------------------------------
 
-# --------------------------------------------------------------
-# Routers
-# --------------------------------------------------------------
 app.include_router(job_router, prefix="/api/ai-builder")
+app.include_router(ai_commands_router, prefix="/api/ai-builder")

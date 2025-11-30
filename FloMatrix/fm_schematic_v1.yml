@@ -1,0 +1,274 @@
+fm_schematic:
+  version: 1.0
+  description: >
+    Canonical map of the FloMatrix ecosystem on the VPS. Defines roots,
+    modules, and AI-safe edit rules so agents can build & maintain the platform.
+
+  # ------------------------------------------------
+  # ENVIRONMENTS / ROOTS
+  # ------------------------------------------------
+  roots:
+    vps_root: /var/www/flomatrix
+
+    # Active public-facing services
+    active_backend_root: /var/www/flomatrix/backend
+    active_frontend_root: /var/www/flomatrix/frontend
+
+    # Lab / monolith tree (full engine + AI Builder)
+    lab_root: /var/www/flomatrix/FloMatrix
+
+    # Read-only archive snapshot
+    archive_root: /var/www/flomatrix/FloMatrix_old
+
+  # ------------------------------------------------
+  # MODULES (HIGH LEVEL)
+  # ------------------------------------------------
+  modules:
+
+    - id: backend.api
+      role: "Primary trading/backend API for FloMatrix"
+      root: /var/www/flomatrix/backend
+      entrypoints:
+        - "uvicorn backend.main:app"
+        - "uvicorn backend.platform_main:app"
+      subdirs:
+        analytics: backend/analytics
+        data_engines: backend/data_engines
+        routes: backend/routes
+        models: backend/models.py
+        database: backend/database.py
+        utils: backend/utils
+        security: backend/security.py
+      protected_paths:
+        - backend/database.py
+        - backend/models.py
+        - backend/security.py
+        - backend/rate_limit.py
+        - backend/platform_main.py
+        - backend/unified_api.py
+      auto_allowed_paths:
+        - backend/routes/
+        - backend/data_engines/
+        - backend/analytics/
+        - backend/utils/
+      notes: >
+        This is the ACTIVE backend. AI can extend routes, data_engines, analytics,
+        and utils, but must treat models/security/database as sensitive and
+        require explicit human approval for structural changes.
+
+    - id: frontend.shell
+      role: "Production UI shell for FloMatrix"
+      root: /var/www/flomatrix/frontend
+      files:
+        index_html: frontend/index.html
+        engine_root: frontend/app/engine
+        assets_css: frontend/assets/css
+        assets_img: frontend/assets
+      protected_paths:
+        - frontend/index.html            # layout/SEO critical
+      auto_allowed_paths:
+        - frontend/assets/css/
+        - frontend/assets/
+        - frontend/app/engine/core/
+        - frontend/app/engine/modules/
+      notes: >
+        This is the thin production shell. AI can improve styling, UX, and
+        engine integration here, but structural rewrites to index.html
+        should go through AI Builder jobs with review.
+
+    - id: lab.anychart
+      role: "AnyChart package and experimental chart prototypes"
+      root: /var/www/flomatrix/FloMatrix/anychart-installation-package
+      notes: >
+        Vendor library. AI should NOT modify anychart core JS/CSS files.
+        Read-only; only consume these as library assets.
+
+    - id: lab.engine
+      role: "Full FloEngine prototype: core, indicators, modules, router, scales"
+      root: /var/www/flomatrix/FloMatrix/app/engine
+      subdirs:
+        core: app/engine/core
+        drawings: app/engine/drawings
+        indicators: app/engine/indicators
+        modules: app/engine/modules
+        router: app/engine/router
+        scales: app/engine/scales
+      protected_paths:
+        - app/engine/core/renderer.js
+        - app/engine/core/gl-context.js
+        - app/engine/core/buffers.js
+        - app/engine/core/shaders.js
+      auto_allowed_paths:
+        - app/engine/indicators/
+        - app/engine/drawings/
+        - app/engine/modules/
+      notes: >
+        This is the heavy WebGL/Web engine lab. AI can add indicators, overlays,
+        modules, and experiment with shaders via AI Builder, but core renderer
+        infrastructure is guarded and requires structured patch jobs.
+
+    - id: lab.backend_legacy
+      role: "Legacy backend tree inside FloMatrix monolith"
+      root: /var/www/flomatrix/FloMatrix/backend
+      notes: >
+        This backend is a historical/alternate implementation. AI may read
+        for reference but should NOT deploy or modify it for production
+        unless a migration job explicitly targets it.
+
+    - id: ai_builder.service
+      role: "FloMatrix AI Builder backend and UI"
+      root: /var/www/flomatrix/FloMatrix/services/ai-builder
+      backend: FloMatrix/services/ai-builder/aibuilder
+      ui: FloMatrix/services/ai-builder/ui
+      entrypoint:
+        - "uvicorn aibuilder.main:app --host 0.0.0.0 --port 9000"
+      protected_paths:
+        - aibuilder/config.py
+        - aibuilder/main.py
+        - aibuilder/routes.py
+      auto_allowed_paths:
+        - aibuilder/jobs/
+        - aibuilder/templates/
+        - ui/assets/
+        - ui/index.html
+      notes: >
+        AI Builder is the orchestrator for AI-driven patch jobs. Agents
+        should prefer to make changes through AI Builder jobs instead of
+        directly editing files over SSH.
+
+    - id: archive.snapshot
+      role: "Frozen snapshot of earlier FloMatrix state"
+      root: /var/www/flomatrix/FloMatrix_old
+      read_only: true
+      notes: >
+        AI MUST NEVER WRITE HERE. Safe for diffing, archaeology, and
+        regression reference only.
+
+  # ------------------------------------------------
+  # AI PATCHING RULES
+  # ------------------------------------------------
+  ai_patch_policies:
+
+    - id: global.no_touch
+      description: "Never touch compiled or environment artifacts."
+      deny_paths:
+        - "**/__pycache__/**"
+        - "**/venv/**"
+        - "**/*.pyc"
+        - "**/node_modules/**"
+
+    - id: global.archive_read_only
+      description: "Archive is reference-only."
+      deny_prefixes:
+        - "/var/www/flomatrix/FloMatrix_old"
+
+    - id: backend.safe_extensions
+      applies_to_module: backend.api
+      allowed_extensions:
+        - ".py"
+        - ".html"
+        - ".json"
+        - ".yaml"
+      notes: >
+        Backend changes must be valid Python, and route additions should
+        live under backend/routes or backend/data_engines unless otherwise
+        specified.
+
+    - id: backend.protected_core
+      applies_to_module: backend.api
+      extra_protected:
+        - "backend/database.py"
+        - "backend/models.py"
+        - "backend/security.py"
+        - "backend/rate_limit.py"
+
+    - id: frontend.safe_zones
+      applies_to_module: frontend.shell
+      allowed_paths:
+        - "frontend/assets/css/"
+        - "frontend/assets/"
+        - "frontend/app/engine/**"
+      notes: >
+        AI can safely iterate on styling, front-end assets, and engine
+        integration here. Structural rewrites of index.html should go through
+        AI Builder review.
+
+    - id: engine.experimental_zone
+      applies_to_module: lab.engine
+      allowed_paths:
+        - "app/engine/indicators/**"
+        - "app/engine/drawings/**"
+        - "app/engine/modules/**"
+        - "app/engine/router/**"
+        - "app/engine/scales/**"
+      notes: >
+        AI can treat these as experimentation zones for indicators, overlays,
+        and routing logic. Changes to core renderer/shaders should be wrapped
+        in dedicated 'ENGINE_PATCH' jobs with backup/diff.
+
+  # ------------------------------------------------
+  # AI COMMAND TYPES (HIGH LEVEL)
+  # ------------------------------------------------
+  ai_commands:
+
+    - type: READ_FILE
+      fields: [path]
+      description: "Return the contents of a single file for analysis."
+
+    - type: LIST_DIR
+      fields: [path, depth]
+      description: "List files under a directory. Must respect deny paths."
+
+    - type: PATCH_FILE
+      fields: [path, patch_body, rationale, risk_level]
+      description: >
+        Replace or modify target file. Must check module and policies.
+        High-risk targets (models, security, core engine) require human
+        approval and backup.
+
+    - type: CREATE_FILE
+      fields: [path, body, rationale]
+      description: "Create a new file within an allowed module."
+
+    - type: CREATE_JOB
+      fields: [job_type, target_module, files, description]
+      job_type_examples:
+        - BACKEND_ROUTE
+        - BACKEND_DATA_ENGINE
+        - FRONTEND_UI_UPDATE
+        - ENGINE_INDICATOR
+        - ENGINE_SHADER_EXPERIMENT
+        - AI_BUILDER_IMPROVEMENT
+
+    - type: RUN_TESTS
+      fields: [scope]
+      description: >
+        Execute predefined test scripts for a module (e.g. backend unit tests,
+        engine rendering smoke tests). To be fleshed out in v2.
+
+  # ------------------------------------------------
+  # HUMAN APPROVAL LEVELS
+  # ------------------------------------------------
+  approval_levels:
+    low_risk:
+      examples:
+        - New CSS in frontend/assets/css
+        - New indicator module in app/engine/indicators
+        - New route file in backend/routes/test_*.py
+      requires_human: false
+
+    medium_risk:
+      examples:
+        - Changes inside backend/routes/*.py
+        - New data engine under backend/data_engines/
+        - Changes to aibuilder/ui/index.html
+      requires_human: true
+
+    high_risk:
+      examples:
+        - Changes to backend/models.py
+        - Changes to backend/database.py
+        - Changes to backend/security.py
+        - Changes to core WebGL engine (renderer.js, shaders.js)
+      requires_human: true
+      requires_backup: true
