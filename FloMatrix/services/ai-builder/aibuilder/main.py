@@ -29,31 +29,52 @@ app = FastAPI(
 )
 
 # --------------------------------------------------------------
-# CORS (still enabled, but once UI is same-origin it is mostly moot)
+# CORS (fine for local dev)
 # --------------------------------------------------------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # safe for local dev; tighten later if needed
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # --------------------------------------------------------------
-# Mount the UI at /ui so browser origin is http://localhost:9000
+# UI mounting (this is what should make http://localhost:9000/ui/ work)
 # --------------------------------------------------------------
-BASE_DIR = Path(__file__).resolve().parent          # .../ai-builder/aibuilder
-PROJECT_ROOT = BASE_DIR.parent                      # .../ai-builder
-UI_DIR = PROJECT_ROOT / "ui"                        # .../ai-builder/ui
+# Layout:
+#   C:\AnyChart\FloMatrix\services\ai-builder\    <- project root
+#       ui\                                      <- UI folder (index.html, assets, ...)
+#       aibuilder\                               <- this package
+
+BASE_DIR = Path(__file__).resolve().parent          # ...\ai-builder\aibuilder
+PROJECT_ROOT = BASE_DIR.parent                      # ...\ai-builder
+UI_DIR = PROJECT_ROOT / "ui"                        # ...\ai-builder\ui
+
+print("[AIB][UI] BASE_DIR     =", BASE_DIR)
+print("[AIB][UI] PROJECT_ROOT =", PROJECT_ROOT)
+print("[AIB][UI] UI_DIR       =", UI_DIR, "exists?", UI_DIR.exists())
 
 if UI_DIR.exists():
-    print(f"[AIB][UI] Mounting AI Builder UI from: {UI_DIR}")
+    print("[AIB][UI] Mounting AI Builder UI from:", UI_DIR)
     app.mount(
         "/ui",
         StaticFiles(directory=str(UI_DIR), html=True),
         name="ui",
     )
 else:
-    print(f"[AIB][UI] WARNING: UI directory not found at {UI_DIR}")
+    print(
+        "[AIB][UI] WARNING: UI directory not found at",
+        UI_DIR,
+        "— /ui will return 404.",
+    )
+
+# --------------------------------------------------------------
+# Tiny debug route to prove THIS main.py is running
+# --------------------------------------------------------------
+@app.get("/ui-test")
+async def ui_test():
+    return {"status": "ok", "message": "FloMatrix UI main.py is active"}
+
 
 # --------------------------------------------------------------
 # Startup Diagnostics (Very Important!)
