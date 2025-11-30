@@ -19,10 +19,13 @@
     <!-- Top Bar ------------------------------------------------>
     <header class="fm-topbar flo-panel glow-strong">
       <div class="fm-top-left">
-        <div class="fm-logo">
-          <span class="fm-logo-mark">FM</span>
-          <span class="fm-logo-text">FloMatrix — AI Builder Control Panel</span>
-          <span class="fm-top-subtitle">Mode C • Institutional AI Repair Pipeline</span>
+        <div class="fm-logo fm-brand">
+          <!-- Use your actual logo file here -->
+          <img src="assets/img/fm-logo.png" alt="FloMatrix logo" class="fm-logo-img" />
+          <div class="fm-brand-text">
+            <span class="fm-title">FloMatrix — AI Builder Control Panel</span>
+            <span class="fm-subtitle">Mode C • Institutional AI Repair Pipeline</span>
+          </div>
         </div>
       </div>
       <div class="fm-top-center">
@@ -41,7 +44,8 @@
         </div>
       </div>
       <div class="fm-top-right">
-        <button id="layout-edit-toggle" class="fm-btn-secondary">Design Mode</button>
+        <!-- ID must match app.js (btn-design-mode) -->
+        <button id="btn-design-mode" class="fm-btn-secondary">Design Mode</button>
         <button id="btn-refresh-all" class="fm-btn-primary">Refresh All</button>
       </div>
     </header>
@@ -123,7 +127,8 @@
           <div class="fm-tabs">
             <button id="tab-logs" class="fm-tab tab-active">Logs</button>
             <button id="tab-diff" class="fm-tab">Patch Diff</button>
-            <button id="tab-ai" class="fm-tab">AI Tools</button>
+            <!-- ID must match app.js (tab-ai-tools) -->
+            <button id="tab-ai-tools" class="fm-tab">AI Tools</button>
           </div>
 
           <!-- Logs panel -->
@@ -135,12 +140,13 @@
           <div id="diff-panel" class="fm-tab-panel" style="display:none;">
             <pre id="diff-text" class="fm-log-text">
 Don't worry, Josh — we are not there yet!
-(Logs & diff engine will plug in once the v2 patch backend is live.)
+(Patch diff endpoint will plug in once the v2 patch backend is live.)
             </pre>
           </div>
 
           <!-- AI tools panel -->
-          <div id="ai-panel" class="fm-tab-panel" style="display:none;">
+          <!-- ID must match app.js (ai-tools-panel) -->
+          <div id="ai-tools-panel" class="fm-tab-panel" style="display:none;">
             <div class="fm-ai-directory">
               <h3>AI Builder Copilot</h3>
               <p class="fm-ai-intro">
@@ -185,6 +191,17 @@ Don't worry, Josh — we are not there yet!
                   <span class="fm-ai-tag">Planned</span>
                 </div>
               </div>
+
+              <ul id="ai-ideas-list" class="fm-ai-ideas">
+                <li>New orderflow overlays for footprint + delta clusters.</li>
+                <li>GPU-accelerated liquidity heatmaps for CME futures.</li>
+                <li>Strategy backtesting report: R:R, win-rate, session heatmap.</li>
+                <li>Institutional DOM ladder with iceberg detection.</li>
+              </ul>
+
+              <button id="btn-open-backtester" class="fm-btn-secondary fm-ai-backtester-btn">
+                Open Backtester Workspace (coming soon)
+              </button>
 
               <p class="fm-ai-footer">
                 Don't worry, Josh — we are not there yet!<br />

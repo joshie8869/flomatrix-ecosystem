@@ -1,26 +1,45 @@
 // =============================================================
 // FloMatrix — AI Builder Control Panel
-// New UI engine, safe for /ui/ + /api/ai-builder
+// Full JS for the HTML dashboard
+// Talks to backend running at:
+//   python -m uvicorn aibuilder.main:app --host 0.0.0.0 --port 9000 --reload
+//
+// Backend Swagger (http://localhost:9000/docs) shows:
+//
+//   GET  /api/ai-builder/jobs                 -> list jobs
+//   POST /api/ai-builder/jobs                 -> create job
+//   GET  /api/ai-builder/jobs/{job_id}        -> get job (status+meta)
+//   POST /api/ai-builder/jobs/{job_id}/run    -> run job
+//   POST /api/ai-builder/jobs/{job_id}/approve-> approve job
+//
+// Logs/diff endpoints don’t exist yet; UI will handle 404s gracefully.
 // =============================================================
 
-// ---------------- Backend routes (relative; same origin) ------
-const API_BASE = "/api/ai-builder";
+// ----------- Backend URLs (hard-wired, no window.location.origin) -----
+
+// This is the key fix: ALWAYS talk to the FastAPI backend on localhost:9000,
+// no matter whether the UI is opened as file:/// or http://.
+const API_BASE = "http://localhost:9000/api/ai-builder";
+const DOCS_URL = "http://localhost:9000/docs";
 
 const API_ROUTES = {
   listJobs: () => `${API_BASE}/jobs`,
   jobStatus: (id) => `${API_BASE}/jobs/${encodeURIComponent(id)}`,
   approve: (id) => `${API_BASE}/jobs/${encodeURIComponent(id)}/approve`,
   run: (id) => `${API_BASE}/jobs/${encodeURIComponent(id)}/run`,
-  // Logs/diff endpoints do not exist yet; we keep placeholders.
-  logs: (id) => null,
-  diff: (id) => null,
-  // Health check uses /jobs instead of /docs to avoid CORS + file:// issues.
-  health: () => `${API_BASE}/jobs`,
+  logs: (id) => `${API_BASE}/jobs/${encodeURIComponent(id)}/logs`,   // optional
+  diff: (id) => `${API_BASE}/jobs/${encodeURIComponent(id)}/diff`,   // optional
+  health: () => DOCS_URL,
 };
 
-// ---------------- Helpers -------------------------------------
-const $ = (sel) => document.querySelector(sel);
-const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+// ----------- DOM helpers ------------------------------------------------
+function $(selector) {
+  return document.querySelector(selector);
+}
+
+function $all(selector) {
+  return Array.from(document.querySelectorAll(selector));
+}
 
 function safeText(value, fallback = "—") {
   if (value === null || value === undefined) return fallback;
@@ -28,7 +47,7 @@ function safeText(value, fallback = "—") {
   return String(value);
 }
 
-// ---------------- State ---------------------------------------
+// ----------- State ------------------------------------------------------
 const state = {
   jobs: [],
   selectedJobId: null,
@@ -39,21 +58,23 @@ const state = {
   lastError: null,
 };
 
-// ---------------- Elements ------------------------------------
-
+// ----------- Elements (expected IDs in index.html) ----------------------
+// Top bar
 const elBackendStatus = $("#backend-status-pill");
+const elBackendDot = $("#backend-status-dot");
+const elRefreshAll = $("#btn-refresh-all");
 const elAutoToggle = $("#auto-toggle");
 const elAutoLabel = $("#auto-label");
 const elAutoSelect = $("#auto-interval-select");
-const elRefreshAll = $("#btn-refresh-all");
-const elLayoutEditToggle = $("#layout-edit-toggle");
+const elDesignModeBtn = $("#btn-design-mode");
 
+// Job queue pane
 const elJobsList = $("#jobs-list");
 const elJobsFilter = $("#job-filter-input");
 const elJobsReload = $("#btn-reload-jobs");
 const elJobsEmptyMsg = $("#jobs-empty-msg");
-const elJobsCountBadge = $("#jobs-count-badge");
 
+// Job details pane
 const elJobTitle = $("#job-title");
 const elJobMeta = $("#job-meta");
 const elJobStatusBadge = $("#job-status-badge");
@@ -62,44 +83,43 @@ const elJobTimeline = $("#job-timeline");
 const elApproveBtn = $("#btn-approve-patch");
 const elRunBtn = $("#btn-run-job");
 const elReloadSelectedBtn = $("#btn-reload-selected");
+
 const elLoadIdInput = $("#job-load-id-input");
 const elLoadIdBtn = $("#btn-load-job-id");
 
+// Logs / diff / AI tools
 const elLogsTabBtn = $("#tab-logs");
 const elDiffTabBtn = $("#tab-diff");
-const elAITabBtn = $("#tab-ai");
+const elAITabBtn = $("#tab-ai-tools");
 const elLogsPanel = $("#logs-panel");
 const elDiffPanel = $("#diff-panel");
-const elAIPanel = $("#ai-panel");
+const elAIToolsPanel = $("#ai-tools-panel");
 const elLogsText = $("#logs-text");
 const elDiffText = $("#diff-text");
 
-const elExportCSV = $("#btn-export-csv");
-const elExportXLSX = $("#btn-export-xlsx");
-const elExportPDF = $("#btn-export-pdf");
-const elExportDOCX = $("#btn-export-docx");
+// AI tools panel elements (lightweight for now)
+const elBacktesterBtn = $("#btn-open-backtester");
+const elIdeaList = $("#ai-ideas-list");
 
+// Footer status
 const elFooterStatus = $("#footer-status");
-const elFooterAutoStatus = $("#footer-auto-status");
 
-// ---------------- Backend Communication -----------------------
+// ----------- Backend communication --------------------------------------
 
 async function checkBackend() {
   try {
     const res = await fetch(API_ROUTES.health(), { method: "GET" });
-    if (!res.ok) {
-      state.backendOnline = false;
-    } else {
-      state.backendOnline = true;
-    }
+    state.backendOnline = res.ok;
+    updateBackendStatusUI();
   } catch (err) {
     state.backendOnline = false;
     state.lastError = err;
+    updateBackendStatusUI();
   }
-  updateBackendStatusUI();
 }
 
 async function fetchJobs() {
+  // Make sure backend check is fresh
   if (!state.backendOnline) {
     await checkBackend();
     if (!state.backendOnline) {
@@ -110,16 +130,18 @@ async function fetchJobs() {
 
   try {
     const res = await fetch(API_ROUTES.listJobs());
-    if (!res.ok) throw new Error(`Jobs HTTP ${res.status}`);
-
+    if (!res.ok) {
+      throw new Error(`Jobs list returned HTTP ${res.status}`);
+    }
     const data = await res.json();
+    // data is expected to be an array; if not, try job list property
     let jobs = Array.isArray(data) ? data : data.jobs || [];
     if (!Array.isArray(jobs)) jobs = [];
 
     state.jobs = jobs;
     renderJobs();
   } catch (err) {
-    console.error("[FM][UI] Failed to fetch jobs:", err);
+    console.error("Failed to fetch jobs:", err);
     state.lastError = err;
     renderJobs(true);
   }
@@ -129,16 +151,17 @@ async function fetchJobDetails(jobId) {
   if (!jobId) return;
   try {
     const res = await fetch(API_ROUTES.jobStatus(jobId));
-    if (!res.ok) throw new Error(`Job ${jobId} HTTP ${res.status}`);
+    if (!res.ok) {
+      throw new Error(`Job status ${jobId} HTTP ${res.status}`);
+    }
     const job = await res.json();
     state.selectedJobId = jobId;
     renderJobDetails(job);
     highlightSelectedJob(jobId);
-    // Logs & diff are not wired yet; show friendly placeholder.
-    renderLogsPlaceholder(jobId);
-    renderDiffPlaceholder(jobId);
+    loadLogs(jobId);
+    loadDiff(jobId);
   } catch (err) {
-    console.error("[FM][UI] Failed to load job:", err);
+    console.error("Failed to load job:", err);
     state.lastError = err;
     renderJobDetails(null, true);
   }
@@ -148,15 +171,23 @@ async function approveJob(jobId) {
   if (!jobId) return;
   try {
     setFooterStatus(`Approving job ${jobId}…`);
-    const res = await fetch(API_ROUTES.approve(jobId), { method: "POST" });
-    if (!res.ok) throw new Error(`Approve HTTP ${res.status}`);
+    const res = await fetch(API_ROUTES.approve(jobId), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        reason: "Approved via FloMatrix AI Builder UI",
+      }),
+    });
+    if (!res.ok) {
+      throw new Error(`Approve HTTP ${res.status}`);
+    }
     setFooterStatus(`Job ${jobId} approved.`);
     await fetchJobs();
     await fetchJobDetails(jobId);
   } catch (err) {
-    console.error("[FM][UI] Approve failed:", err);
+    console.error("Approve failed:", err);
     state.lastError = err;
-    setFooterStatus(`Failed to approve job ${jobId}.`);
+    setFooterStatus(`Failed to approve job ${jobId}. Check console logs.`);
   }
 }
 
@@ -164,55 +195,96 @@ async function runJob(jobId) {
   if (!jobId) return;
   try {
     setFooterStatus(`Running job ${jobId}…`);
-    const res = await fetch(API_ROUTES.run(jobId), { method: "POST" });
-    if (!res.ok) throw new Error(`Run HTTP ${res.status}`);
+    const res = await fetch(API_ROUTES.run(jobId), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ trigger: "manual-ui" }),
+    });
+    if (!res.ok) {
+      throw new Error(`Run HTTP ${res.status}`);
+    }
     setFooterStatus(`Job ${jobId} run triggered.`);
     await fetchJobs();
     await fetchJobDetails(jobId);
   } catch (err) {
-    console.error("[FM][UI] Run failed:", err);
+    console.error("Run failed:", err);
     state.lastError = err;
-    setFooterStatus(`Failed to run job ${jobId}.`);
+    setFooterStatus(`Failed to run job ${jobId}. Check console logs.`);
   }
 }
 
-// ---------------- UI Rendering --------------------------------
+async function loadLogs(jobId) {
+  if (!elLogsText || !jobId) return;
+  try {
+    const res = await fetch(API_ROUTES.logs(jobId));
+    if (!res.ok) {
+      // Josh message instead of scary error
+      elLogsText.textContent =
+        "Don't worry, Josh — we are not there yet! (Logs endpoint not implemented yet.)";
+      return;
+    }
+    const text = await res.text();
+    elLogsText.textContent = text || "No logs.";
+  } catch {
+    elLogsText.textContent = "Unable to load logs right now.";
+  }
+}
+
+async function loadDiff(jobId) {
+  if (!elDiffText || !jobId) return;
+  try {
+    const res = await fetch(API_ROUTES.diff(jobId));
+    if (!res.ok) {
+      elDiffText.textContent =
+        "Don't worry, Josh — we are not there yet! (Patch diff endpoint not implemented yet.)";
+      return;
+    }
+    const text = await res.text();
+    elDiffText.textContent = text || "No diff.";
+  } catch {
+    elDiffText.textContent = "Unable to load diff right now.";
+  }
+}
+
+// ----------- UI rendering -----------------------------------------------
 
 function updateBackendStatusUI() {
-  if (!elBackendStatus) return;
-  elBackendStatus.classList.remove("status-online", "status-offline");
-  if (state.backendOnline) {
-    elBackendStatus.textContent = "Backend: ONLINE";
-    elBackendStatus.classList.add("status-online");
-  } else {
-    elBackendStatus.textContent = "Backend: OFFLINE";
-    elBackendStatus.classList.add("status-offline");
+  const online = state.backendOnline;
+
+  if (elBackendStatus) {
+    elBackendStatus.textContent = online ? "Backend: ONLINE" : "Backend: OFFLINE";
+    elBackendStatus.classList.toggle("status-online", online);
+    elBackendStatus.classList.toggle("status-offline", !online);
+  }
+  if (elBackendDot) {
+    elBackendDot.classList.toggle("dot-online", online);
+    elBackendDot.classList.toggle("dot-offline", !online);
   }
 }
 
 function renderJobs(error = false) {
   if (!elJobsList) return;
+
   elJobsList.innerHTML = "";
 
   if (error) {
     if (elJobsEmptyMsg) {
       elJobsEmptyMsg.textContent =
-        "Unable to load jobs. Check that the AI Builder backend is running and /api/ai-builder/jobs is reachable.";
+        "Unable to load jobs. Check that the AI Builder backend is running on localhost:9000 and that /api/ai-builder/jobs is reachable.";
       elJobsEmptyMsg.style.display = "block";
     }
-    if (elJobsCountBadge) elJobsCountBadge.textContent = "0 jobs";
     return;
   }
 
-  const filter = (elJobsFilter?.value || "").trim().toLowerCase();
-  let jobs = state.jobs || [];
+  const filter = (elJobsFilter?.value || "").toLowerCase().trim();
 
+  let jobs = state.jobs || [];
   if (filter) {
     jobs = jobs.filter((job) => {
-      const id = safeText(job.id || job.job_id || "", "").toLowerCase();
-      const status = safeText(job.status || job.state || "", "").toLowerCase();
-      const repo = safeText(job.repo || job.repository || "", "").toLowerCase();
-      const path = safeText(job.path || job.target_path || "", "").toLowerCase();
+      const id = safeText(job.id || job.job_id || "").toLowerCase();
+      const status = safeText(job.status || job.state || "").toLowerCase();
+      const repo = safeText(job.repo || job.repository || "").toLowerCase();
+      const path = safeText(job.path || job.target_path || "").toLowerCase();
       return (
         id.includes(filter) ||
         status.includes(filter) ||
@@ -222,15 +294,11 @@ function renderJobs(error = false) {
     });
   }
 
-  if (elJobsCountBadge) {
-    elJobsCountBadge.textContent = `${jobs.length} job${jobs.length === 1 ? "" : "s"}`;
-  }
-
   if (jobs.length === 0) {
     if (elJobsEmptyMsg) {
       elJobsEmptyMsg.textContent = state.backendOnline
-        ? "No jobs yet. When the AI Builder creates jobs, they will appear here."
-        : "Unable to load jobs. Check that the AI Builder backend is running.";
+        ? "No jobs yet. Use the AI Tools tab or your other agents to create an AI job."
+        : "Unable to load jobs. Check that the AI Builder backend is running on localhost:9000.";
       elJobsEmptyMsg.style.display = "block";
     }
     return;
@@ -251,7 +319,11 @@ function renderJobs(error = false) {
     row.innerHTML = `
       <div class="job-row-main">
         <div class="job-row-id">${safeText(jobId)}</div>
-        <div class="job-row-status">${safeText(status)}</div>
+        <div class="job-row-status job-row-status-${safeText(status)
+          .toLowerCase()
+          .replace(/[^a-z0-9_-]/g, "")}">
+          ${safeText(status)}
+        </div>
       </div>
       <div class="job-row-sub">
         <span class="job-row-repo">${safeText(repo)}</span>
@@ -278,9 +350,9 @@ function renderJobs(error = false) {
 
 function highlightSelectedJob(jobId) {
   if (!elJobsList) return;
-  $$(".job-row").forEach((row) => {
-    const selected = jobId && row.dataset.jobId === String(jobId);
-    row.classList.toggle("job-row-selected", selected);
+  $all(".job-row").forEach((row) => {
+    const isSelected = jobId && row.dataset.jobId === String(jobId);
+    row.classList.toggle("job-row-selected", isSelected);
   });
 }
 
@@ -313,7 +385,10 @@ function renderJobDetails(job, error = false) {
 
   if (elJobStatusBadge) {
     elJobStatusBadge.textContent = safeText(status);
-    elJobStatusBadge.className = "fm-job-status-badge";
+    elJobStatusBadge.className = "job-status-badge";
+    elJobStatusBadge.classList.add(
+      `job-status-${safeText(status).toLowerCase().replace(/[^a-z0-9_-]/g, "")}`
+    );
   }
 
   if (elJobTimeline) {
@@ -321,49 +396,32 @@ function renderJobDetails(job, error = false) {
     const steps = job.timeline || job.events || [];
     if (Array.isArray(steps) && steps.length > 0) {
       steps.forEach((step) => {
+        const li = document.createElement("div");
+        li.className = "timeline-item";
         const label = step.label || step.event || "Event";
         const ts = step.timestamp || step.time || "";
         const msg = step.message || step.detail || "";
-        const div = document.createElement("div");
-        div.className = "timeline-item";
-        div.innerHTML = `
+        li.innerHTML = `
           <div class="timeline-header">
             <span class="timeline-label">${safeText(label)}</span>
             <span class="timeline-time">${safeText(ts)}</span>
           </div>
           <div class="timeline-body">${safeText(msg)}</div>
         `;
-        elJobTimeline.appendChild(div);
+        elJobTimeline.appendChild(li);
       });
     }
   }
 }
 
-function renderLogsPlaceholder(jobId) {
-  if (!elLogsText) return;
-  if (!jobId) {
-    elLogsText.textContent = "No job selected yet.";
-    return;
-  }
-  elLogsText.textContent =
-    `Logs for job ${jobId} are not wired yet.\n\n` +
-    "Don't worry, Josh — we are not there yet!\n" +
-    "Once the v2 log endpoint is live, this panel will show full AI Builder logs.";
-}
-
-function renderDiffPlaceholder(jobId) {
-  if (!elDiffText) return;
-  elDiffText.textContent =
-    "Don't worry, Josh — we are not there yet!\n\n" +
-    "Patch diff rendering will plug in here once the backend exposes\n" +
-    "/jobs/{id}/diff. For now this stays intentionally non-destructive.";
-}
-
-// ---------------- Auto Refresh --------------------------------
+// ----------- Auto-refresh management ------------------------------------
 
 function setupAutoRefresh() {
+  if (!state.autoRefresh) {
+    clearAutoTimer();
+    return;
+  }
   clearAutoTimer();
-  if (!state.autoRefresh) return;
   state.autoTimer = setInterval(() => {
     fetchJobs();
   }, state.autoIntervalMs);
@@ -378,181 +436,27 @@ function clearAutoTimer() {
 }
 
 function updateAutoUI() {
-  if (elAutoToggle && elAutoLabel && elFooterAutoStatus) {
-    elAutoToggle.classList.toggle("auto-on", state.autoRefresh);
-    elAutoToggle.classList.toggle("auto-off", !state.autoRefresh);
-    elAutoLabel.textContent = state.autoRefresh
-      ? `Auto: ON (${Math.round(state.autoIntervalMs / 1000)}s)`
-      : "Auto: OFF";
-    elFooterAutoStatus.textContent = state.autoRefresh ? "ON" : "OFF";
+  if (!elAutoToggle || !elAutoLabel) return;
+  elAutoToggle.classList.toggle("auto-on", state.autoRefresh);
+  elAutoToggle.classList.toggle("auto-off", !state.autoRefresh);
+  elAutoLabel.textContent = state.autoRefresh
+    ? `Auto: ON (${Math.round(state.autoIntervalMs / 1000)}s)`
+    : "Auto: OFF";
+
+  if (elAutoSelect) {
+    elAutoSelect.value = String(state.autoIntervalMs);
   }
 }
 
-// ---------------- Export Helpers ------------------------------
-
-function getExportRows() {
-  // basic flatten of jobs + selected job details
-  return state.jobs.map((job) => ({
-    id: job.id || job.job_id || job.uuid || "",
-    status: job.status || job.state || "",
-    repo: job.repo || job.repository || "",
-    path: job.path || job.target_path || "",
-    created_at:
-      job.created_at || job.created || job.timestamp || job.createdAt || "",
-  }));
-}
-
-function exportCSV() {
-  const rows = getExportRows();
-  if (rows.length === 0) {
-    alert("No jobs to export yet.");
-    return;
-  }
-  const headers = Object.keys(rows[0]);
-  const csv = [
-    headers.join(","),
-    ...rows.map((r) => headers.map((h) => JSON.stringify(r[h] ?? "")).join(",")),
-  ].join("\n");
-
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "flomatrix_jobs.csv";
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function exportXLSX() {
-  try {
-    if (typeof XLSX === "undefined") {
-      alert("XLSX library not loaded.");
-      return;
-    }
-    const rows = getExportRows();
-    if (rows.length === 0) {
-      alert("No jobs to export yet.");
-      return;
-    }
-    const ws = XLSX.utils.json_to_sheet(rows);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Jobs");
-    XLSX.writeFile(wb, "flomatrix_jobs.xlsx");
-  } catch (err) {
-    console.error("XLSX export failed:", err);
-    alert("Excel export failed. Check console for details.");
-  }
-}
-
-function exportPDF() {
-  try {
-    if (typeof window.jspdf === "undefined" && typeof window.jspdf === "undefined" && typeof window.jspdf === "undefined") {
-      // jspdf.umd exposes window.jspdf.jsPDF
-    }
-    const jsPDF = window.jspdf?.jsPDF;
-    if (!jsPDF) {
-      alert("jsPDF library not loaded.");
-      return;
-    }
-    const rows = getExportRows();
-    if (rows.length === 0) {
-      alert("No jobs to export yet.");
-      return;
-    }
-    const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
-    doc.setFontSize(12);
-    doc.text("FloMatrix — AI Builder Jobs Snapshot", 40, 40);
-    let y = 70;
-    rows.forEach((r) => {
-      doc.text(`ID: ${r.id}`, 40, y);
-      doc.text(`Status: ${r.status}`, 40, y + 14);
-      doc.text(`Repo: ${r.repo}`, 40, y + 28);
-      doc.text(`Path: ${r.path}`, 40, y + 42);
-      doc.text(`Created: ${r.created_at}`, 40, y + 56);
-      y += 80;
-      if (y > 740) {
-        doc.addPage();
-        y = 40;
-      }
-    });
-    doc.save("flomatrix_jobs.pdf");
-  } catch (err) {
-    console.error("PDF export failed:", err);
-    alert("PDF export failed. Check console for details.");
-  }
-}
-
-function exportDOCX() {
-  try {
-    const docxLib = window.docx || window.docxLib || window.docxjs || window.docxjsLib;
-    if (!docxLib || !docxLib.Document || !docxLib.Packer || !docxLib.Paragraph) {
-      alert("DOCX library not loaded.");
-      return;
-    }
-    const { Document, Packer, Paragraph, TextRun } = docxLib;
-    const rows = getExportRows();
-    if (rows.length === 0) {
-      alert("No jobs to export yet.");
-      return;
-    }
-
-    const paragraphs = [];
-    paragraphs.push(
-      new Paragraph({
-        children: [new TextRun({ text: "FloMatrix — AI Builder Jobs Snapshot", bold: true, size: 28 })],
-      })
-    );
-
-    rows.forEach((r) => {
-      paragraphs.push(
-        new Paragraph({
-          children: [
-            new TextRun({ text: `ID: ${r.id}`, break: 1 }),
-            new TextRun({ text: `Status: ${r.status}`, break: 1 }),
-            new TextRun({ text: `Repo: ${r.repo}`, break: 1 }),
-            new TextRun({ text: `Path: ${r.path}`, break: 1 }),
-            new TextRun({ text: `Created: ${r.created_at}`, break: 1 }),
-          ],
-        })
-      );
-    });
-
-    const doc = new Document({
-      sections: [{ properties: {}, children: paragraphs }],
-    });
-
-    Packer.toBlob(doc).then((blob) => {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "flomatrix_jobs.docx";
-      a.click();
-      URL.revokeObjectURL(url);
-    });
-  } catch (err) {
-    console.error("DOCX export failed:", err);
-    alert("DOCX export failed. Check console for details.");
-  }
-}
-
-// ---------------- Layout / Design Mode ------------------------
-
-function toggleDesignMode() {
-  document.body.classList.toggle("fm-design-mode");
-  const on = document.body.classList.contains("fm-design-mode");
-  if (elLayoutEditToggle) {
-    elLayoutEditToggle.textContent = on ? "Exit Design Mode" : "Design Mode";
-  }
-  setFooterStatus(on ? "Design Mode ON — rearrange panels visually." : "Design Mode OFF.");
-}
-
-// ---------------- Footer status -------------------------------
+// ----------- Footer status ----------------------------------------------
 
 function setFooterStatus(text) {
-  if (elFooterStatus) elFooterStatus.textContent = text || "";
+  if (elFooterStatus) {
+    elFooterStatus.textContent = text || "";
+  }
 }
 
-// ---------------- Event Wiring -------------------------------
+// ----------- Event wiring -----------------------------------------------
 
 function wireEvents() {
   if (elRefreshAll) {
@@ -560,7 +464,7 @@ function wireEvents() {
       setFooterStatus("Refreshing backend status + jobs…");
       await checkBackend();
       await fetchJobs();
-      setFooterStatus("Ready.");
+      setFooterStatus("");
     });
   }
 
@@ -568,7 +472,7 @@ function wireEvents() {
     elJobsReload.addEventListener("click", async () => {
       setFooterStatus("Reloading jobs…");
       await fetchJobs();
-      setFooterStatus("Ready.");
+      setFooterStatus("");
     });
   }
 
@@ -617,68 +521,71 @@ function wireEvents() {
   if (elAutoSelect) {
     elAutoSelect.addEventListener("change", () => {
       const ms = parseInt(elAutoSelect.value, 10);
-      if (!Number.isNaN(ms) && ms >= 3000) {
+      if (!Number.isNaN(ms) && ms > 1000) {
         state.autoIntervalMs = ms;
         setupAutoRefresh();
       }
     });
   }
 
-  if (elLayoutEditToggle) {
-    elLayoutEditToggle.addEventListener("click", toggleDesignMode);
-  }
-
   if (elLogsTabBtn && elDiffTabBtn && elAITabBtn) {
-    elLogsTabBtn.addEventListener("click", () => {
-      setActiveTab("logs");
-    });
-    elDiffTabBtn.addEventListener("click", () => {
-      setActiveTab("diff");
-    });
-    elAITabBtn.addEventListener("click", () => {
-      setActiveTab("ai");
+    const updateTabs = (active) => {
+      const map = {
+        logs: [elLogsTabBtn, elLogsPanel],
+        diff: [elDiffTabBtn, elDiffPanel],
+        ai: [elAITabBtn, elAIToolsPanel],
+      };
+      for (const key of Object.keys(map)) {
+        const [btn, panel] = map[key];
+        if (!btn || !panel) continue;
+        const on = key === active;
+        btn.classList.toggle("tab-active", on);
+        panel.style.display = on ? "block" : "none";
+      }
+    };
+
+    elLogsTabBtn.addEventListener("click", () => updateTabs("logs"));
+    elDiffTabBtn.addEventListener("click", () => updateTabs("diff"));
+    elAITabBtn.addEventListener("click", () => updateTabs("ai"));
+
+    // default to logs
+    updateTabs("logs");
+  }
+
+  if (elDesignModeBtn) {
+    elDesignModeBtn.addEventListener("click", () => {
+      document.body.classList.toggle("fm-design-mode");
     });
   }
 
-  if (elExportCSV) elExportCSV.addEventListener("click", exportCSV);
-  if (elExportXLSX) elExportXLSX.addEventListener("click", exportXLSX);
-  if (elExportPDF) elExportPDF.addEventListener("click", exportPDF);
-  if (elExportDOCX) elExportDOCX.addEventListener("click", exportDOCX);
-}
+  if (elBacktesterBtn) {
+    elBacktesterBtn.addEventListener("click", () => {
+      alert(
+        "Backtester workspace: this button will eventually open a dedicated FloMatrix backtesting UI.\n\nFor now, use this as a navigation anchor and design target."
+      );
+    });
+  }
 
-function setActiveTab(tab) {
-  if (!elLogsTabBtn || !elDiffTabBtn || !elAITabBtn) return;
-  [elLogsTabBtn, elDiffTabBtn, elAITabBtn].forEach((btn) =>
-    btn.classList.remove("tab-active")
-  );
-  if (tab === "logs") elLogsTabBtn.classList.add("tab-active");
-  if (tab === "diff") elDiffTabBtn.classList.add("tab-active");
-  if (tab === "ai") elAITabBtn.classList.add("tab-active");
-
-  if (elLogsPanel && elDiffPanel && elAIPanel) {
-    elLogsPanel.style.display = tab === "logs" ? "block" : "none";
-    elDiffPanel.style.display = tab === "diff" ? "block" : "none";
-    elAIPanel.style.display = tab === "ai" ? "block" : "none";
+  // AI ideas list: nothing dynamic yet, but we keep the hook
+  if (elIdeaList) {
+    // could later inject dynamic ideas; for now it’s static in HTML
   }
 }
 
-// ---------------- Boot ----------------------------------------
+// ----------- Boot -------------------------------------------------------
 
 async function boot() {
   updateBackendStatusUI();
   updateAutoUI();
   wireEvents();
-  setActiveTab("logs");
-  setFooterStatus("Checking backend & loading jobs…");
   await checkBackend();
   await fetchJobs();
   setupAutoRefresh();
-  setFooterStatus("Ready.");
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   boot().catch((err) => {
-    console.error("[FM][UI] Boot failed:", err);
+    console.error("Boot failed:", err);
     state.lastError = err;
     setFooterStatus("Failed to initialize AI Builder UI.");
   });

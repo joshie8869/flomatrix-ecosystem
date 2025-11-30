@@ -540,3 +540,111 @@ body.fm-body {
 .fm-design-mode .fm-column {
   cursor: move;
 }
+
+/* ----- Panel glow + resize ------------------------------------------ */
+
+.fm-panel {
+  position: relative;
+  background: #05070f;
+  border-radius: 18px;
+  border: 1px solid #161b2a;
+  box-shadow: 0 0 40px rgba(46, 242, 126, 0.08);
+  padding: 16px;
+  /* let you resize horizontally; bottom-right handle */
+  resize: horizontal;
+  overflow: auto;
+  min-width: 260px;
+}
+
+/* When Design Mode is on, make the glow stronger so you feel in "edit" mode */
+body.fm-design-mode .fm-panel {
+  box-shadow: 0 0 55px rgba(46, 242, 126, 0.20);
+}
+
+/* ----- Kill the little green bubble, show image logo instead -------- */
+
+/* Whatever the circle element class is (adjust if needed) */
+.fm-logo-circle,
+.fm-logo-badge {
+  display: none !important;
+}
+
+/* Use an image logo instead */
+.fm-logo-img {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  object-fit: contain;
+  margin-right: 10px;
+  box-shadow: 0 0 20px rgba(46, 242, 126, 0.6);
+}
+
+.fm-brand {
+  display: flex;
+  align-items: center;
+}
+
+.fm-brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.fm-title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.fm-subtitle {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+/* ----- Tabs including AI Tools ------------------------------------- */
+
+.fm-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.fm-tab,
+.tab {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: #050810;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.fm-tab.tab-active,
+.tab.tab-active {
+  background: #1b1f30;
+  border-color: #2ef27e;
+  box-shadow: 0 0 18px rgba(46, 242, 126, 0.45);
+}
+
+/* AI Tools panel text */
+
+#ai-tools-panel h3 {
+  margin-top: 0;
+  font-size: 13px;
+}
+
+#ai-tools-panel ul {
+  padding-left: 18px;
+  margin-top: 6px;
+}
+
+#ai-tools-panel li {
+  font-size: 11px;
+  margin-bottom: 3px;
+}
+
+.ai-note {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
