@@ -1,7 +1,7 @@
 // =============================================================
 // FloMatrix — AI Builder Control Panel
 // Full JS for the HTML dashboard
-// Talks to backend running at:
+// Backend runs as:
 //   python -m uvicorn aibuilder.main:app --host 0.0.0.0 --port 9000 --reload
 //
 // Backend Swagger (http://localhost:9000/docs) shows:
@@ -15,12 +15,14 @@
 // Logs/diff endpoints don’t exist yet; UI will handle 404s gracefully.
 // =============================================================
 
-// ----------- Backend URLs (hard-wired, no window.location.origin) -----
+// ----------- Backend URLs (SAME ORIGIN) ----------------------
 
-// This is the key fix: ALWAYS talk to the FastAPI backend on localhost:9000,
-// no matter whether the UI is opened as file:/// or http://.
-const API_BASE = "http://localhost:9000/api/ai-builder";
-const DOCS_URL = "http://localhost:9000/docs";
+// IMPORTANT: we no longer hard-code localhost. Whatever host/port
+// the UI is served from (http://localhost:9000/ui/), we use that
+// as the API origin. This avoids CORS headaches entirely.
+const ORIGIN = window.location.origin;
+const API_BASE = `${ORIGIN}/api/ai-builder`;
+const DOCS_URL = `${ORIGIN}/docs`;
 
 const API_ROUTES = {
   listJobs: () => `${API_BASE}/jobs`,
@@ -61,7 +63,7 @@ const state = {
 // ----------- Elements (expected IDs in index.html) ----------------------
 // Top bar
 const elBackendStatus = $("#backend-status-pill");
-const elBackendDot = $("#backend-status-dot");
+const elBackendDot = $("#backend-status-dot"); // optional, may not exist
 const elRefreshAll = $("#btn-refresh-all");
 const elAutoToggle = $("#auto-toggle");
 const elAutoLabel = $("#auto-label");
@@ -97,12 +99,13 @@ const elAIToolsPanel = $("#ai-tools-panel");
 const elLogsText = $("#logs-text");
 const elDiffText = $("#diff-text");
 
-// AI tools panel elements (lightweight for now)
+// AI tools panel elements
 const elBacktesterBtn = $("#btn-open-backtester");
 const elIdeaList = $("#ai-ideas-list");
 
 // Footer status
 const elFooterStatus = $("#footer-status");
+const elFooterAutoStatus = $("#footer-auto-status");
 
 // ----------- Backend communication --------------------------------------
 
@@ -119,7 +122,7 @@ async function checkBackend() {
 }
 
 async function fetchJobs() {
-  // Make sure backend check is fresh
+  // Ensure we have a fresh backend check
   if (!state.backendOnline) {
     await checkBackend();
     if (!state.backendOnline) {
@@ -134,7 +137,6 @@ async function fetchJobs() {
       throw new Error(`Jobs list returned HTTP ${res.status}`);
     }
     const data = await res.json();
-    // data is expected to be an array; if not, try job list property
     let jobs = Array.isArray(data) ? data : data.jobs || [];
     if (!Array.isArray(jobs)) jobs = [];
 
@@ -218,7 +220,6 @@ async function loadLogs(jobId) {
   try {
     const res = await fetch(API_ROUTES.logs(jobId));
     if (!res.ok) {
-      // Josh message instead of scary error
       elLogsText.textContent =
         "Don't worry, Josh — we are not there yet! (Logs endpoint not implemented yet.)";
       return;
@@ -298,7 +299,7 @@ function renderJobs(error = false) {
     if (elJobsEmptyMsg) {
       elJobsEmptyMsg.textContent = state.backendOnline
         ? "No jobs yet. Use the AI Tools tab or your other agents to create an AI job."
-        : "Unable to load jobs. Check that the AI Builder backend is running on localhost:9000.";
+        : "Unable to load jobs. Check that the AI Builder backend is running.";
       elJobsEmptyMsg.style.display = "block";
     }
     return;
@@ -385,7 +386,7 @@ function renderJobDetails(job, error = false) {
 
   if (elJobStatusBadge) {
     elJobStatusBadge.textContent = safeText(status);
-    elJobStatusBadge.className = "job-status-badge";
+    elJobStatusBadge.className = "fm-job-status-badge";
     elJobStatusBadge.classList.add(
       `job-status-${safeText(status).toLowerCase().replace(/[^a-z0-9_-]/g, "")}`
     );
@@ -419,6 +420,7 @@ function renderJobDetails(job, error = false) {
 function setupAutoRefresh() {
   if (!state.autoRefresh) {
     clearAutoTimer();
+    updateAutoUI();
     return;
   }
   clearAutoTimer();
@@ -436,15 +438,18 @@ function clearAutoTimer() {
 }
 
 function updateAutoUI() {
-  if (!elAutoToggle || !elAutoLabel) return;
-  elAutoToggle.classList.toggle("auto-on", state.autoRefresh);
-  elAutoToggle.classList.toggle("auto-off", !state.autoRefresh);
-  elAutoLabel.textContent = state.autoRefresh
-    ? `Auto: ON (${Math.round(state.autoIntervalMs / 1000)}s)`
-    : "Auto: OFF";
-
+  if (elAutoToggle && elAutoLabel) {
+    elAutoToggle.classList.toggle("auto-on", state.autoRefresh);
+    elAutoToggle.classList.toggle("auto-off", !state.autoRefresh);
+    elAutoLabel.textContent = state.autoRefresh
+      ? `Auto: ON (${Math.round(state.autoIntervalMs / 1000)}s)`
+      : "Auto: OFF";
+  }
   if (elAutoSelect) {
     elAutoSelect.value = String(state.autoIntervalMs);
+  }
+  if (elFooterAutoStatus) {
+    elFooterAutoStatus.textContent = state.autoRefresh ? "ON" : "OFF";
   }
 }
 
@@ -566,9 +571,8 @@ function wireEvents() {
     });
   }
 
-  // AI ideas list: nothing dynamic yet, but we keep the hook
   if (elIdeaList) {
-    // could later inject dynamic ideas; for now it’s static in HTML
+    // placeholder: later we can dynamically inject new idea items
   }
 }
 
