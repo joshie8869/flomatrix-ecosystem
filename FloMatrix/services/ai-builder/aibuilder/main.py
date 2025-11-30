@@ -30,19 +30,13 @@ app = FastAPI(
 )
 
 # --------------------------------------------------------------
-# CORS — safe but simple (mostly redundant now that UI is same origin)
+# CORS — wide open for local + file:// UI
+# (You can tighten this later once the UI is served from a domain.)
 # --------------------------------------------------------------
-
-CORS_ORIGINS = [
-    "http://localhost",
-    "http://127.0.0.1",
-    "http://localhost:9000",
-    "http://127.0.0.1:9000",
-]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=CORS_ORIGINS,
+    allow_origins=["*"],          # allow file://, localhost, 127.0.0.1, IPs, etc.
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -53,9 +47,9 @@ app.add_middleware(
 # Directory: services/ai-builder/ui/
 # --------------------------------------------------------------
 
-BASE_DIR = Path(__file__).resolve().parent          # ...\services\ai-builder\aibuilder
-ROOT_DIR = BASE_DIR.parent                          # ...\services\ai-builder
-UI_DIR = ROOT_DIR / "ui"                            # ...\services\ai-builder\ui
+BASE_DIR = Path(__file__).resolve().parent          # .../services/ai-builder/aibuilder
+ROOT_DIR = BASE_DIR.parent                          # .../services/ai-builder
+UI_DIR = ROOT_DIR / "ui"                            # .../services/ai-builder/ui
 
 if UI_DIR.exists():
     app.mount(
